@@ -1,0 +1,249 @@
+<!-- src/main/resources/templates/admin/raid-scenarios.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>레이드 세트 관리</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 24px;
+    }
+
+    h1, h2 {
+      margin: 0 0 16px 0;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .top-bar a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 24px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-row label {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .form-row input,
+    .form-row textarea,
+    .form-row select {
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #030712;
+      color: #e5e7eb;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+
+    .form-row textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .btn-row {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: #9ca3af;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: #111827;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #374151;
+      text-align: left;
+    }
+
+    th {
+      font-weight: 500;
+      color: #9ca3af;
+    }
+
+    tbody tr:hover {
+      background: #111827;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      background: #111827;
+      color: #93c5fd;
+    }
+
+    .room-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 16px 0;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="top-bar">
+    <h1>레이드 세트 관리</h1>
+    <a th:href="@{/admin}">← 관리자 홈으로</a>
+  </div>
+
+  <!-- 새 세트 생성 카드 -->
+  <div class="card">
+    <div class="card-title">새 레이드 세트 생성</div>
+
+    <!-- AdminRaidScenarioController에서 넘겨주는 form / bosses 사용 -->
+    <form th:action="@{/admin/raids/new}" th:object="${form}" method="post">
+      <div class="form-grid">
+        <div class="form-row">
+          <label>세트 이름</label>
+          <input type="text" th:field="*{name}" placeholder="예) 튜토리얼 레이드" required>
+        </div>
+
+        <div class="form-row">
+          <label>보스 선택 (보스 DB)</label>
+          <select th:field="*{bossId}" required>
+            <option th:if="${#lists.isEmpty(bosses)}" value="">등록된 보스가 없습니다.</option>
+            <option th:unless="${#lists.isEmpty(bosses)}" value="">보스를 선택하세요</option>
+            <option th:each="b : ${bosses}"
+                    th:value="${b.id}"
+                    th:text="${b.id + ' - ' + b.name + ' (HP ' + b.maxHp + ')'}">
+            </option>
+          </select>
+        </div>
+
+        <div class="form-row" style="grid-column: 1 / -1;">
+          <label>설명</label>
+          <textarea th:field="*{description}" placeholder="레이드에 대한 설명을 적어주세요."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">세트 생성</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 세트 목록 카드 -->
+  <div class="card">
+    <div class="card-title">등록된 레이드 세트</div>
+
+    <table>
+      <thead>
+      <tr>
+        <th style="width: 60px;">ID</th>
+        <th>세트 이름</th>
+        <th style="width: 180px;">보스</th>
+        <th>설명</th>
+        <th style="width: 160px;">Lobby Room</th>
+        <th style="width: 160px;">Raid Room</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:if="${#lists.isEmpty(scenarios)}">
+        <td colspan="6" class="empty">아직 등록된 레이드 세트가 없습니다.</td>
+      </tr>
+
+      <tr th:each="sc : ${scenarios}">
+        <td th:text="${sc.id}"></td>
+        <td>
+          <span th:text="${sc.name}"></span>
+          <!-- RaidScenario에 getBossName()이 있다고 가정 -->
+          <span class="badge" th:if="${sc.bossName != null}"
+                th:text="${'Boss: ' + sc.bossName}"></span>
+        </td>
+        <td>
+          <!-- bossName / boss 정보 표시 -->
+          <div th:text="${sc.bossName != null ? sc.bossName : '(보스 미지정)'}"></div>
+          <div class="room-id"
+               th:text="${sc.boss != null ? '(ID: ' + sc.boss.id + ', HP: ' + sc.boss.maxHp + ')' : ''}">
+          </div>
+        </td>
+        <td th:text="${sc.description}">-</td>
+        <td class="room-id" th:text="${'lobby-' + sc.id}"></td>
+        <td class="room-id" th:text="${'raid-' + sc.id}"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

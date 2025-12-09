@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Boss Raid</title>
-
-    <!-- 외부 CSS 링크 -->
     <link rel="stylesheet" th:href="@{/css/raid-room.css}">
 </head>
 <body>
@@ -13,6 +11,9 @@
     <span th:text="'Player: ' + ${username}"></span>
     <span th:if="${character != null}"
           th:text="' | Character: ' + ${character.name}"></span>
+    <span th:text="' | Raid: ' + ${scenario.name}"></span>
+    <span th:if="${scenario.bossName != null}"
+          th:text="' | Boss: ' + ${scenario.bossName}"></span>
 </div>
 
 <div class="raid-container">
@@ -22,11 +23,15 @@
         <!-- 보스 영역 -->
         <div class="boss-area">
             <div class="section-title">Boss</div>
-            <div class="boss-name" id="boss-name">Dark Dragon</div>
+            <div class="boss-name" id="boss-name"
+                 th:text="${bossName}">Dark Dragon</div>
             <div class="hp-bar-wrapper">
                 <div class="hp-bar-fill" id="boss-hp-bar"></div>
             </div>
-            <div class="hp-text" id="boss-hp-text">HP 7000 / 10000 (70%)</div>
+            <div class="hp-text" id="boss-hp-text"
+                 th:text="${'HP ' + bossCurrentHp + ' / ' + bossMaxHp}">
+                HP 7000 / 10000 (70%)
+            </div>
         </div>
 
         <!-- 파티 영역 -->
@@ -51,15 +56,11 @@
     <!-- ===== RIGHT: 채팅 ===== -->
     <div class="raid-right">
         <div class="chat-header">Raid Chat</div>
-
-        <!-- ✅ 상태 표시 한 줄 추가 -->
         <div id="chat-status" class="chat-status">연결 대기중...</div>
 
-        <!-- ✅ username / roomId를 data-*로 넣어줌 -->
         <div class="chat-window"
              id="chat-window"
-             th:attr="data-username=${username}, data-room-id='raid-1'">
-            <!-- WebSocket에서 온 메시지들이 여기 append -->
+             th:attr="data-username=${username}, data-room-id=${roomId}">
         </div>
 
         <div class="chat-input-area">

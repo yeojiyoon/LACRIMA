@@ -4,14 +4,11 @@ const chatInput = document.getElementById("chat-input");
 const sendBtn = document.getElementById("chat-send-btn");
 const statusEl = document.getElementById("chat-status");
 
-// 🔹 파티 영역 요소
+// 파티 영역
 const partyArea = document.querySelector(".party-area");
 
-// 🔹 파티 렌더 함수
 function renderParty(party) {
     if (!partyArea) return;
-
-    // 기존 내용 지우고 "Party" 타이틀 다시 붙이기
     partyArea.innerHTML = "";
 
     const title = document.createElement("div");
@@ -48,7 +45,7 @@ function renderParty(party) {
     });
 }
 
-// 템플릿에서 data-* 로 내려준 값 읽기
+// 템플릿에서 data-* 로 내려준 값
 const username =
     (chatWindow && chatWindow.dataset.username) ||
     ("guest" + Math.floor(Math.random() * 1000));
@@ -59,7 +56,6 @@ let roomId =
 
 let socket = null;
 
-// === 메시지 유틸 ===
 function addMessage(text, cssClass) {
     const div = document.createElement("div");
     if (cssClass) div.className = "chat-message " + cssClass;
@@ -69,12 +65,10 @@ function addMessage(text, cssClass) {
 }
 
 function setStatus(text) {
-    if (statusEl) {
-        statusEl.textContent = text;
-    }
+    if (statusEl) statusEl.textContent = text;
 }
 
-// === 보스 HP 갱신 함수 ===
+// 보스 HP 갱신
 function updateBossHp(current, max) {
     const bar = document.getElementById("boss-hp-bar");
     const text = document.getElementById("boss-hp-text");
@@ -85,14 +79,11 @@ function updateBossHp(current, max) {
     text.textContent = `HP ${current} / ${max} (${Math.round(ratio)}%)`;
 }
 
-// === WebSocket 연결 ===
 function connect() {
     console.log("웹소켓 연결 시도");
 
-    // 현재 페이지 프로토콜에 따라 ws 또는 wss 자동 선택
     const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
     const host = window.location.host;
-
     const wsUrl = wsProtocol + host + "/ws/chat";
     console.log("Connecting to:", wsUrl);
 
@@ -115,11 +106,10 @@ function connect() {
     socket.onmessage = (event) => {
         console.log("onmessage raw:", event.data);
         let data;
-
         try {
             data = JSON.parse(event.data);
         } catch (e) {
-            console.error("JSON 파싱 실패, raw 출력:", event.data);
+            console.error("JSON 파싱 실패:", event.data);
             addMessage(event.data, "other");
             return;
         }
@@ -138,8 +128,7 @@ function connect() {
                     text = "나: " + (data.message || "");
                     cssClass = "me";
                 } else {
-                    text =
-                        (data.sender || "알 수 없음") + ": " + (data.message || "");
+                    text = (data.sender || "알 수 없음") + ": " + (data.message || "");
                     cssClass = "other";
                 }
                 break;
@@ -147,12 +136,7 @@ function connect() {
             case "ATTACK_RESULT":
                 text = "[공격] " + (data.message || "");
                 if (data.bossHp != null && data.maxHp != null) {
-                    text +=
-                        " (보스 HP: " +
-                        data.bossHp +
-                        " / " +
-                        data.maxHp +
-                        ")";
+                    text += " (보스 HP: " + data.bossHp + " / " + data.maxHp + ")";
                     updateBossHp(data.bossHp, data.maxHp);
                 }
                 cssClass = "system";
@@ -166,12 +150,8 @@ function connect() {
                 return;
 
             default:
-                text =
-                    "[" +
-                    data.type +
-                    "] " +
-                    (data.sender || "") +
-                    " " +
+                text = "[" + data.type + "] " +
+                    (data.sender || "") + " " +
                     (data.message || "");
                 cssClass = "other";
         }
@@ -183,8 +163,6 @@ function connect() {
         console.log("onclose:", event);
         setStatus("❌ 연결이 종료되었습니다. (3초 후 재접속)");
         addMessage("시스템: 연결이 종료되었습니다.", "system");
-
-        // 재접속 시도 — Fly.io는 잠시 스케일링될 수 있어서 필요함
         setTimeout(connect, 3000);
     };
 
@@ -195,8 +173,6 @@ function connect() {
     };
 }
 
-
-// === 메시지 보내기 ===
 function sendMessage() {
     const text = chatInput.value.trim();
     if (!text || !socket || socket.readyState !== WebSocket.OPEN) {
@@ -206,12 +182,9 @@ function sendMessage() {
     if (text.startsWith("/atk")) {
         const parts = text.split(" ");
         let damage = null;
-
         if (parts.length > 1) {
             const parsed = parseInt(parts[1], 10);
-            if (!isNaN(parsed)) {
-                damage = parsed;
-            }
+            if (!isNaN(parsed)) damage = parsed;
         }
 
         const attackMsg = {
@@ -220,7 +193,6 @@ function sendMessage() {
             roomId: roomId,
             damage: damage
         };
-
         socket.send(JSON.stringify(attackMsg));
     } else {
         const msg = {
@@ -236,15 +208,11 @@ function sendMessage() {
     chatInput.focus();
 }
 
-// === 이벤트 바인딩 ===
 if (sendBtn && chatInput) {
     sendBtn.addEventListener("click", sendMessage);
     chatInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            sendMessage();
-        }
+        if (e.key === "Enter") sendMessage();
     });
 }
 
-// 페이지 로드 시 자동 연결
 connect();

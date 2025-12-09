@@ -30,13 +30,8 @@ function setStatus(text) {
 function connect() {
     console.log("웹소켓(로비) 연결 시도");
 
-    // 현재 페이지 프로토콜에 따라 ws 또는 wss 자동 선택
     const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-
-    // 현재 도메인 + 포트 (예: demo.fly.dev, localhost:8080)
     const host = window.location.host;
-
-    // 최종 WebSocket URL
     const wsUrl = wsProtocol + host + "/ws/chat";
     console.log("Connecting to:", wsUrl);
 
@@ -72,7 +67,6 @@ function connect() {
                 text = "시스템: " + (data.message || "");
                 cssClass = "system";
                 break;
-
             case "CHAT":
                 if (data.sender === username) {
                     text = "나: " + (data.message || "");
@@ -82,7 +76,6 @@ function connect() {
                     cssClass = "other";
                 }
                 break;
-
             default:
                 text = "[" + data.type + "] " +
                     (data.sender || "") + " " +
@@ -98,7 +91,6 @@ function connect() {
         setTimeout(connect, 3000);
     };
 }
-
 
 function sendMessage() {
     const text = chatInput.value.trim();
@@ -128,8 +120,8 @@ if (sendBtn && chatInput) {
 
 if (enterRaidBtn) {
     enterRaidBtn.addEventListener("click", () => {
-        // 전투방으로 이동
-        window.location.href = "/raid-room";
+        const raidUrl = enterRaidBtn.dataset.raidUrl;
+        window.location.href = raidUrl;
     });
 }
 

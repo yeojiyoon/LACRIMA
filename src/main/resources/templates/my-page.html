@@ -11,6 +11,9 @@
     <span th:text="'Player: ' + ${username}"></span>
     <span th:text="' | Nickname: ' + ${nickname}"></span>
     <span th:text="' | Role: ' + ${role}"></span>
+    <span th:text="' | Raid: ' + ${scenario.name}"></span>
+    <span th:if="${scenario.bossName != null}"
+          th:text="' | Boss: ' + ${scenario.bossName}"></span>
 </div>
 
 <div class="mypage-container">
@@ -73,13 +76,13 @@
 
     <!-- RIGHT: 채팅 + 전투방 입장 -->
     <div class="mypage-right">
-        <div class="chat-header">로비 채팅</div>
+        <div class="chat-header">로비 채팅 (세트별)</div>
         <div id="chat-status" class="chat-status">연결 대기중...</div>
 
         <!-- username / roomId 전달 -->
         <div class="chat-window"
              id="chat-window"
-             th:attr="data-username=${username}, data-room-id='lobby-1'">
+             th:attr="data-username=${username}, data-room-id=${lobbyRoomId}">
         </div>
 
         <div class="chat-footer">
@@ -88,9 +91,11 @@
                 <button id="chat-send-btn">보내기</button>
             </div>
 
-            <!-- 전투방 입장 버튼 (우측 하단) -->
+            <!-- 전투방 입장 버튼 -->
             <div class="enter-raid-wrapper">
-                <button id="enter-raid-btn" class="enter-raid-btn">
+                <button id="enter-raid-btn"
+                        class="enter-raid-btn"
+                        th:attr="data-raid-url=@{|/raid-room/${scenario.id}|}">
                     ⚔ 전투방 입장
                 </button>
             </div>

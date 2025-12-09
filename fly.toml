@@ -24,3 +24,6 @@ primary_region = 'sin'
 [[mounts]]
   source = "data"
   destination = "/app/data"
+
+[env]
+  SPRING_DATASOURCE_URL = "jdbc:h2:file:/data/chatdb"

@@ -52,7 +52,7 @@ public class DataInitConfig {
             if (bossRepo.count() == 0) {
                 BossMonster boss = new BossMonster(
                         "카오스 드래곤",
-                        50000,
+                        1000,
                         30
                 );
                 bossRepo.save(boss);

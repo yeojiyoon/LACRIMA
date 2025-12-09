@@ -8,39 +8,53 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RaidPartyService {
 
-    // roomId → (characterId → PlayerCharacter)
-    private final Map<String, Map<Long, PlayerCharacter>> parties = new ConcurrentHashMap<>();
+    // roomId -> 캐릭터 ID 목록
+    private final Map<String, List<Long>> roomMembers = new ConcurrentHashMap<>();
 
-    // 레이드 방에 캐릭터 참가
-    public void join(String roomId, PlayerCharacter character) {
-        if (character == null) return;
+    private final PlayerCharacterService playerCharacterService;
 
-        parties.computeIfAbsent(roomId, id -> new ConcurrentHashMap<>())
-                .put(character.getId(), character);
+    public RaidPartyService(PlayerCharacterService playerCharacterService) {
+        this.playerCharacterService = playerCharacterService;
     }
 
-    // 레이드 방에서 캐릭터 퇴장
-    public void leave(String roomId, Long characterId) {
-        Map<Long, PlayerCharacter> party = parties.get(roomId);
-        if (party == null) return;
-
-        party.remove(characterId);
-
-        if (party.isEmpty()) {
-            parties.remove(roomId);
+    /**
+     * 파티에 캐릭터 참가
+     */
+    public synchronized void join(String roomId, PlayerCharacter pc) {
+        List<Long> members = roomMembers.computeIfAbsent(roomId, id -> new ArrayList<>());
+        Long charId = pc.getId();
+        if (!members.contains(charId)) {
+            members.add(charId);
         }
     }
 
-    // 현재 방의 파티 멤버 목록 (뷰용 DTO로 변환)
+    /**
+     * 파티에서 캐릭터 제거
+     */
+    public synchronized void leave(String roomId, Long characterId) {
+        List<Long> members = roomMembers.get(roomId);
+        if (members == null) return;
+
+        members.remove(characterId);
+        if (members.isEmpty()) {
+            roomMembers.remove(roomId);
+        }
+    }
+
+    /**
+     * 현재 파티원 목록 (항상 "최신 HP"로 PartyMemberView를 새로 만들어서 반환)
+     */
     public List<PartyMemberView> getPartyMembers(String roomId) {
-        Map<Long, PlayerCharacter> party = parties.get(roomId);
-        if (party == null) {
-            return Collections.emptyList();
+        List<Long> members = roomMembers.get(roomId);
+        if (members == null || members.isEmpty()) {
+            return List.of();
         }
 
         List<PartyMemberView> result = new ArrayList<>();
-        for (PlayerCharacter pc : party.values()) {
-            result.add(PartyMemberView.from(pc));
+        for (Long charId : members) {
+            PlayerCharacter pc = playerCharacterService.findById(charId);
+            if (pc == null) continue;
+            result.add(PartyMemberView.from(pc)); // 🔥 현재 DB 상태 기준으로 새로 생성
         }
         return result;
     }

@@ -37,6 +37,9 @@ public class PlayerCharacter {
     @Column(nullable = false)
     private int currentHp; //수치
 
+    @Column (nullable = false)
+    private int actionPoint;
+
     protected PlayerCharacter() {
     }
 
@@ -61,6 +64,7 @@ public class PlayerCharacter {
                 break;
         }
         this.currentHp = maxHp; //DB에서 받아오도록 해야함
+        this.actionPoint = 1;
     }
 
     // getter/setter들
@@ -74,5 +78,27 @@ public class PlayerCharacter {
     public int getDet() { return det; }
     public int getMaxHp() { return maxHp; }
     public int getCurrentHp() { return currentHp; }
+    public int getActionPoint() { return actionPoint; }
     public void setCurrentHp(int currentHp) { this.currentHp = currentHp; }
+
+    public void resetActionPoint() {
+        // 죽어있으면 행동포인트도 0 유지
+        if (this.currentHp > 0) {
+            this.actionPoint = 1;
+        } else {
+            this.actionPoint = 0;
+        }
+    }
+
+    public boolean consumeAction() {
+        if (actionPoint <= 0) {
+            return false;
+        }
+        this.actionPoint -= 1;
+        return true;
+    }
+
+    public boolean isDead() {
+        return this.currentHp <= 0;
+    }
 }

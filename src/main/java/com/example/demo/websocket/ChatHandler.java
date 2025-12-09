@@ -1,11 +1,6 @@
 package com.example.demo.websocket;
 
-import com.example.demo.game.BossService;
-import com.example.demo.game.BossState;
-import com.example.demo.game.PartyMemberView;
-import com.example.demo.game.PlayerCharacter;
-import com.example.demo.game.PlayerCharacterService;
-import com.example.demo.game.RaidPartyService;
+import com.example.demo.game.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -31,17 +26,16 @@ public class ChatHandler extends TextWebSocketHandler {
     // 세션 -> 이 세션의 캐릭터 ID (파티에서 제거할 때 사용)
     private final Map<WebSocketSession, Long> sessionCharacter = new ConcurrentHashMap<>();
 
-    private final BossService bossService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final RaidGameService raidGameService;
     private final PlayerCharacterService playerCharacterService;
     private final RaidPartyService raidPartyService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    public ChatHandler(BossService bossService,
+    public ChatHandler(RaidGameService raidGameService,
                        PlayerCharacterService playerCharacterService,
                        RaidPartyService raidPartyService) {
-
-        this.bossService = bossService;
+        this.raidGameService = raidGameService;
         this.playerCharacterService = playerCharacterService;
         this.raidPartyService = raidPartyService;
     }
@@ -167,11 +161,8 @@ public class ChatHandler extends TextWebSocketHandler {
         // 🔹 sender 이름 기준으로 PlayerCharacter 찾기
         PlayerCharacter pc = playerCharacterService.findByUsername(username);
         if (pc != null) {
-            // 세션 → 캐릭터 ID 저장
-            sessionCharacter.put(session, pc.getId());
-
-            // 파티에 등록
-            raidPartyService.join(roomId, pc);
+            sessionCharacter.put(session, pc.getId()); // 세션 → 캐릭터 ID 저장
+            raidPartyService.join(roomId, pc); // 파티에 등록
         }
 
         ChatMessage systemMsg = new ChatMessage();
@@ -208,7 +199,6 @@ public class ChatHandler extends TextWebSocketHandler {
     private void handleAttack(WebSocketSession session, ChatMessage msg) throws Exception {
         String roomId = resolveRoomId(session, msg);
         if (roomId == null) {
-            // 방에 안 들어와 있으면 경고
             ChatMessage warn = new ChatMessage();
             warn.setType(MessageType.SYSTEM);
             warn.setSender("SYSTEM");
@@ -222,10 +212,34 @@ public class ChatHandler extends TextWebSocketHandler {
             username = getUsername(session);
         }
 
-        String resultText;
         try {
-            // 🔹 여기서 roomId와 damage를 함께 BossService에 전달
-            resultText = bossService.attackBoss(roomId, username, msg.getDamage());
+            // 1) 캐릭터 조회
+            PlayerCharacter pc = playerCharacterService.findByUsername(username);
+
+            // 2) 공격 처리 (여기서 보스 HP 감소 + 필요하면 보스 턴 + 파티 HP 감소)
+            AttackResult result = raidGameService.handleAttack(roomId, username, pc);
+
+            // 3) 공격 결과 메시지 브로드캐스트
+            ChatMessage resultMsg = new ChatMessage();
+            resultMsg.setType(MessageType.ATTACK_RESULT);
+            resultMsg.setSender("SYSTEM");
+            resultMsg.setRoomId(roomId);
+            resultMsg.setMessage(result.getMessage());
+            resultMsg.setDamage(result.getDamage());
+            resultMsg.setBossHp(result.getBossHp());
+            resultMsg.setMaxHp(result.getMaxHp());
+            // 턴 정보도 쓰고 싶으면 여기서 같이 세팅
+            // resultMsg.setTurn(result.getTurn());
+            // resultMsg.setTurnEnded(result.isTurnEnded());
+
+            broadcastToRoom(roomId, resultMsg);
+
+            // 4) 🔥 턴이 끝났다면 (보스 턴까지 끝났다는 뜻)
+            //    → 바뀐 파티원 HP를 PARTY_UPDATE로 다시 브로드캐스트
+            if (result.isTurnEnded()) {
+                sendPartyUpdate(roomId);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
 
@@ -236,24 +250,10 @@ public class ChatHandler extends TextWebSocketHandler {
             errorMsg.setMessage("공격 처리 중 오류가 발생했습니다: " + e.getMessage());
 
             broadcastToRoom(roomId, errorMsg);
-            return;
         }
-
-        // 공격 결과 + 보스 HP를 클라이언트에게 알려주기
-        BossState state = bossService.getBossState(roomId);
-
-        ChatMessage resultMsg = new ChatMessage();
-        resultMsg.setType(MessageType.ATTACK_RESULT);
-        resultMsg.setSender("SYSTEM");
-        resultMsg.setRoomId(roomId);
-        resultMsg.setMessage(resultText);              // BossService가 만든 설명 문자열
-        if (state != null) {
-            resultMsg.setBossHp(state.getHp());
-            resultMsg.setMaxHp(state.getMaxHp());
-        }
-
-        broadcastToRoom(roomId, resultMsg);
     }
+
+
 
     // 사용자가 LEAVE 타입을 직접 보냈을 때 (선택)
     private void handleLeave(WebSocketSession session, ChatMessage msg) throws Exception {

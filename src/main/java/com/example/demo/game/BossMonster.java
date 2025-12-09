@@ -1,7 +1,7 @@
 package com.example.demo.game;
 
 import jakarta.persistence.*;
-
+//table이고 아직 안 쓰는 엔티티
 @Entity
 @Table(name = "boss_monster")
 public class BossMonster {

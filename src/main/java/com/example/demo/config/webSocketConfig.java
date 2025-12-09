@@ -5,6 +5,7 @@ package com.example.demo.config;
 
 import com.example.demo.game.BossService;
 import com.example.demo.game.PlayerCharacterService;
+import com.example.demo.game.RaidGameService;
 import com.example.demo.game.RaidPartyService;
 import com.example.demo.websocket.ChatHandler;
 import org.springframework.context.annotation.Bean;
@@ -18,14 +19,14 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class webSocketConfig implements WebSocketConfigurer {
 
-    private final BossService bossService;
+    private final RaidGameService raidGameService;
     private final PlayerCharacterService playerCharacterService;
     private final RaidPartyService raidPartyService;
 
-    public webSocketConfig(BossService bossService,
+    public webSocketConfig(RaidGameService raidGameService,
                            PlayerCharacterService playerCharacterService,
                            RaidPartyService raidPartyService) {
-        this.bossService = bossService;
+        this.raidGameService = raidGameService;
         this.playerCharacterService = playerCharacterService;
         this.raidPartyService = raidPartyService;
     }
@@ -39,7 +40,7 @@ public class webSocketConfig implements WebSocketConfigurer {
     @Bean
     public WebSocketHandler chatHandler() {
         return new ChatHandler(
-                bossService,
+                raidGameService,
                 playerCharacterService,
                 raidPartyService
         );

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class BossService {
 
-    private static final int DEFAULT_MAX_HP = 100;
+    private static final int DEFAULT_MAX_HP = 1000;
 
     // roomId -> BossState
     private final Map<String, BossState> bosses = new ConcurrentHashMap<>();
@@ -49,7 +49,7 @@ public class BossService {
             return "보스는 이미 쓰러져 있습니다. (방: " + roomId + ")";
         }
 
-        int actualDamage = (damage != null && damage > 0) ? damage : 10;
+        int actualDamage = (damage != null && damage > 0) ? damage : 10; //대미지 입력..?
         int oldHp = boss.getHp();
         int newHp = Math.max(0, oldHp - actualDamage);
         boss.setHp(newHp);

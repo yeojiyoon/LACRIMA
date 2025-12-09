@@ -6,6 +6,7 @@ public enum MessageType {
     JOIN,       // 방 입장
     LEAVE,      // 방 퇴장
     ATTACK,     // 공격 (보스 레이드용)
+    PARTY_UPDATE,
 
     // 서버 → 클라이언트
     ATTACK_RESULT, // 공격 결과

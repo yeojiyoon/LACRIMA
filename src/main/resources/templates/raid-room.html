@@ -10,7 +10,6 @@
 <body>
 
 <div class="top-bar">
-    <!-- 로그인 유저 정보 표시 -->
     <span th:text="'Player: ' + ${username}"></span>
     <span th:if="${character != null}"
           th:text="' | Character: ' + ${character.name}"></span>

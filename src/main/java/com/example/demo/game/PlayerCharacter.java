@@ -20,32 +20,47 @@ public class PlayerCharacter {
     private String name;   // 캐릭터 이름 (별칭)
 
     @Column(nullable = false)
-    private int level;
+    private int atk;    // 공격력
 
     @Column(nullable = false)
-    private int attack;    // 공격력
+    private int intelligence;   // 지력
 
     @Column(nullable = false)
-    private int defense;   // 방어력
+    private int Hp;   // 스탯
+
+    @Column(nullable = false)
+    private int det;   // 의지
 
     @Column(nullable = false)
     private int maxHp;
 
     @Column(nullable = false)
-    private int currentHp;
+    private int currentHp; //수치
 
     protected PlayerCharacter() {
     }
 
-    public PlayerCharacter(UserAccount user, String name, int level,
-                           int attack, int defense, int maxHp) {
+    public PlayerCharacter(UserAccount user, String name, int atk,
+                           int intelligence, int Hp, int det) {
         this.user = user;
         this.name = name;
-        this.level = level;
-        this.attack = attack;
-        this.defense = defense;
-        this.maxHp = maxHp;
-        this.currentHp = maxHp;
+        this.atk = atk;
+        this.intelligence = intelligence;
+        this.Hp = Hp;
+        this.det = det;
+        switch (Hp){
+            case 1: maxHp = 120;
+                break;
+            case 2: maxHp = 140;
+                break;
+            case 3: maxHp = 160;
+                break;
+            case 4: maxHp = 180;
+                break;
+            case 5: maxHp = 200;
+                break;
+        }
+        this.currentHp = maxHp; //DB에서 받아오도록 해야함
     }
 
     // getter/setter들
@@ -53,9 +68,10 @@ public class PlayerCharacter {
     public UserAccount getUser() { return user; }
 
     public String getName() { return name; }
-    public int getLevel() { return level; }
-    public int getAttack() { return attack; }
-    public int getDefense() { return defense; }
+    public int getAtk() { return atk; }
+    public int getIntelligence() { return intelligence; }
+    public int getHp() { return Hp; }
+    public int getDet() { return det; }
     public int getMaxHp() { return maxHp; }
     public int getCurrentHp() { return currentHp; }
     public void setCurrentHp(int currentHp) { this.currentHp = currentHp; }

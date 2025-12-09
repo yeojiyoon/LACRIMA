@@ -32,27 +32,41 @@
 
             <!-- 나중에 진짜 캐릭터 엔티티 연결 시 th:text로 교체 -->
             <div class="info-row">
-                <span class="label">이름</span>
-                <span class="value" th:text="${character != null ? character.name : '미등록'}">
-                    미등록
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="label">레벨</span>
+                <span class="label">캐릭터 이름</span>
                 <span class="value"
-                      th:text="${character != null ? character.level : '-'}">-</span>
+                      th:text="${character != null ? character.name : '미등록'}">미등록</span>
             </div>
-            <div class="info-row">
-                <span class="label">HP</span>
-                <span class="value"
-                      th:text="${character != null ? character.hp + ' / ' + character.maxHp : '-'}">
-                    -
-                </span>
-            </div>
+
             <div class="info-row">
                 <span class="label">공격력</span>
                 <span class="value"
-                      th:text="${character != null ? character.attack : '-'}">-</span>
+                      th:text="${character != null ? character.atk : '-'}">-</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">지력</span>
+                <span class="value"
+                      th:text="${character != null ? character.intelligence : '-'}">-</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">HP 스탯</span>
+                <span class="value"
+                      th:text="${character != null ? character.hp : '-'}">-</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">의지</span>
+                <span class="value"
+                      th:text="${character != null ? character.det : '-'}">-</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">현재 HP</span>
+                <span class="value"
+                      th:text="${character != null ? character.currentHp + ' / ' + character.maxHp : '-'}">
+                    -
+                </span>
             </div>
         </div>
     </div>

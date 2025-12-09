@@ -2,6 +2,10 @@ package com.example.demo.websocket;
 
 import com.example.demo.game.BossService;
 import com.example.demo.game.BossState;
+import com.example.demo.game.PartyMemberView;
+import com.example.demo.game.PlayerCharacter;
+import com.example.demo.game.PlayerCharacterService;
+import com.example.demo.game.RaidPartyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -24,11 +28,22 @@ public class ChatHandler extends TextWebSocketHandler {
     // 세션 -> 이 세션이 속한 roomId
     private final Map<WebSocketSession, String> sessionRoom = new ConcurrentHashMap<>();
 
+    // 세션 -> 이 세션의 캐릭터 ID (파티에서 제거할 때 사용)
+    private final Map<WebSocketSession, Long> sessionCharacter = new ConcurrentHashMap<>();
+
     private final BossService bossService;
+    private final PlayerCharacterService playerCharacterService;
+    private final RaidPartyService raidPartyService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChatHandler(BossService bossService) {
+    public ChatHandler(BossService bossService,
+                       PlayerCharacterService playerCharacterService,
+                       RaidPartyService raidPartyService) {
+
         this.bossService = bossService;
+        this.playerCharacterService = playerCharacterService;
+        this.raidPartyService = raidPartyService;
     }
 
     @Override
@@ -105,6 +120,12 @@ public class ChatHandler extends TextWebSocketHandler {
                 }
             }
 
+            // 🔹 파티에서 캐릭터 제거
+            Long charId = sessionCharacter.remove(session);
+            if (charId != null) {
+                raidPartyService.leave(roomId, charId);
+            }
+
             ChatMessage systemMsg = new ChatMessage();
             systemMsg.setType(MessageType.SYSTEM);
             systemMsg.setSender("SYSTEM");
@@ -113,6 +134,9 @@ public class ChatHandler extends TextWebSocketHandler {
                     (roomSessions != null ? roomSessions.size() : 0));
 
             broadcastToRoom(roomId, systemMsg);
+
+            // 🔹 파티 정보 갱신
+            sendPartyUpdate(roomId);
         }
 
         System.out.println("퇴장: " + username + ", status=" + status);
@@ -140,6 +164,16 @@ public class ChatHandler extends TextWebSocketHandler {
         System.out.println("JOIN: " + username + " -> " + roomId +
                 " (인원: " + roomSessions.size() + ")");
 
+        // 🔹 sender 이름 기준으로 PlayerCharacter 찾기
+        PlayerCharacter pc = playerCharacterService.findByUsername(username);
+        if (pc != null) {
+            // 세션 → 캐릭터 ID 저장
+            sessionCharacter.put(session, pc.getId());
+
+            // 파티에 등록
+            raidPartyService.join(roomId, pc);
+        }
+
         ChatMessage systemMsg = new ChatMessage();
         systemMsg.setType(MessageType.SYSTEM);
         systemMsg.setSender("SYSTEM");
@@ -148,6 +182,9 @@ public class ChatHandler extends TextWebSocketHandler {
                 " 방에 입장했습니다. 현재 인원: " + roomSessions.size());
 
         broadcastToRoom(roomId, systemMsg);
+
+        // 🔹 파티 정보 전체 브로드캐스트
+        sendPartyUpdate(roomId);
     }
 
     // 일반 채팅
@@ -218,7 +255,6 @@ public class ChatHandler extends TextWebSocketHandler {
         broadcastToRoom(roomId, resultMsg);
     }
 
-
     // 사용자가 LEAVE 타입을 직접 보냈을 때 (선택)
     private void handleLeave(WebSocketSession session, ChatMessage msg) throws Exception {
         String username = msg.getSender();
@@ -237,6 +273,12 @@ public class ChatHandler extends TextWebSocketHandler {
         }
         sessionRoom.remove(session);
 
+        // 🔹 파티에서 제거
+        Long charId = sessionCharacter.remove(session);
+        if (charId != null) {
+            raidPartyService.leave(roomId, charId);
+        }
+
         ChatMessage systemMsg = new ChatMessage();
         systemMsg.setType(MessageType.SYSTEM);
         systemMsg.setSender("SYSTEM");
@@ -245,6 +287,9 @@ public class ChatHandler extends TextWebSocketHandler {
                 (roomSessions != null ? roomSessions.size() : 0));
 
         broadcastToRoom(roomId, systemMsg);
+
+        // 🔹 파티 정보 갱신
+        sendPartyUpdate(roomId);
     }
 
     // ================== 유틸 ==================
@@ -289,5 +334,17 @@ public class ChatHandler extends TextWebSocketHandler {
             return principal.getName();
         }
         return session.getId();
+    }
+
+    // 🔹 파티 정보 전체를 PARTY_UPDATE로 브로드캐스트
+    private void sendPartyUpdate(String roomId) throws Exception {
+        var partyList = raidPartyService.getPartyMembers(roomId);
+
+        ChatMessage partyMsg = new ChatMessage();
+        partyMsg.setType(MessageType.PARTY_UPDATE);
+        partyMsg.setRoomId(roomId);
+        partyMsg.setParty(partyList);
+
+        broadcastToRoom(roomId, partyMsg);
     }
 }

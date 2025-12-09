@@ -1,13 +1,28 @@
 package com.example.demo.web;
 
+import com.example.demo.game.PartyMemberView;
+import com.example.demo.game.PlayerCharacter;
+import com.example.demo.game.PlayerCharacterService;
+import com.example.demo.game.RaidPartyService;
 import com.example.demo.user.UserAccount;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.List;
+
 @Controller
 public class PageController {
+
+    private final PlayerCharacterService playerCharacterService;
+    private final RaidPartyService raidPartyService;
+
+    public PageController(PlayerCharacterService playerCharacterService,
+                          RaidPartyService raidPartyService) {
+        this.playerCharacterService = playerCharacterService;
+        this.raidPartyService = raidPartyService;
+    }
 
     @GetMapping("/login")
     public String loginPage() {
@@ -25,28 +40,37 @@ public class PageController {
         model.addAttribute("nickname", user.getNickname());
         model.addAttribute("role", user.getRole());
 
-        // TODO: 유저 → 캐릭터 매핑 넣기
-        // GameCharacter character = characterService.findByOwner(user.getUsername());
-        // model.addAttribute("character", character);
+        PlayerCharacter character = playerCharacterService.findByUser(user);
+        model.addAttribute("character", character);
 
-        return "my-page"; // templates/my-page.html
+        return "my-page";
     }
 
     @GetMapping("/raid-room")
     public String raidRoom(HttpSession session, Model model) {
 
         UserAccount user = (UserAccount) session.getAttribute("loginUser");
-
-        if (user == null) { //로그인 안되어있을경우
+        if (user == null) {
             return "redirect:/login";
         }
 
         model.addAttribute("username", user.getUsername());
 
-        // TODO: 캐릭터 정보/파티 정보 넣기
-        // model.addAttribute("character", character);
-        // model.addAttribute("partyMembers", party);
+        // 내 캐릭터
+        PlayerCharacter me = playerCharacterService.findByUser(user);
+        model.addAttribute("character", me);
 
-        return "raid-room";  // templates/raid-room.html 자동 렌더링됨
+        // 일단 roomId 하나 고정 (나중에 다중 방 지원 가능)
+        String roomId = "raid-1";
+        model.addAttribute("roomId", roomId);
+
+        // 레이드방 입장 시 파티에 나를 추가
+        raidPartyService.join(roomId, me);
+
+        // 현재 방의 파티 멤버 목록
+        List<PartyMemberView> partyMembers = raidPartyService.getPartyMembers(roomId);
+        model.addAttribute("partyMembers", partyMembers);
+
+        return "raid-room";
     }
 }

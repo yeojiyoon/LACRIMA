@@ -4,6 +4,50 @@ const chatInput = document.getElementById("chat-input");
 const sendBtn = document.getElementById("chat-send-btn");
 const statusEl = document.getElementById("chat-status");
 
+// 🔹 파티 영역 요소
+const partyArea = document.querySelector(".party-area");
+
+// 🔹 파티 렌더 함수
+function renderParty(party) {
+    if (!partyArea) return;
+
+    // 기존 내용 지우고 "Party" 타이틀 다시 붙이기
+    partyArea.innerHTML = "";
+
+    const title = document.createElement("div");
+    title.className = "section-title";
+    title.textContent = "Party";
+    partyArea.appendChild(title);
+
+    party.forEach(member => {
+        const row = document.createElement("div");
+        row.className = "character-row";
+
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "character-name";
+        nameDiv.textContent = member.name;
+
+        const hpWrapper = document.createElement("div");
+        hpWrapper.className = "char-hp-wrapper";
+
+        const hpFill = document.createElement("div");
+        hpFill.className = "char-hp-fill";
+        hpFill.style.width = (member.hpRatio ?? 0) + "%";
+
+        hpWrapper.appendChild(hpFill);
+
+        const hpText = document.createElement("div");
+        hpText.className = "char-hp-text";
+        hpText.textContent = member.hp + " / " + member.maxHp;
+
+        row.appendChild(nameDiv);
+        row.appendChild(hpWrapper);
+        row.appendChild(hpText);
+
+        partyArea.appendChild(row);
+    });
+}
+
 // 템플릿에서 data-* 로 내려준 값 읽기
 const username =
     (chatWindow && chatWindow.dataset.username) ||
@@ -30,7 +74,7 @@ function setStatus(text) {
     }
 }
 
-// === 보스 HP 갱신 함수 (UI 쪽에서 정의했던 것 재사용) ===
+// === 보스 HP 갱신 함수 ===
 function updateBossHp(current, max) {
     const bar = document.getElementById("boss-hp-bar");
     const text = document.getElementById("boss-hp-text");
@@ -44,7 +88,6 @@ function updateBossHp(current, max) {
 // === WebSocket 연결 ===
 function connect() {
     console.log("웹소켓 연결 시도");
-    // 서버 엔드포인트는 기존과 동일: /ws/chat
     socket = new WebSocket("ws://" + window.location.host + "/ws/chat");
 
     socket.onopen = () => {
@@ -52,7 +95,6 @@ function connect() {
         setStatus("✅ 서버와 연결되었습니다. (방: " + roomId + ")");
         addMessage("시스템: " + roomId + " 방에 입장 시도 중...", "system");
 
-        // JOIN 메시지 전송 (roomId 포함)
         const joinMsg = {
             type: "JOIN",
             sender: username,
@@ -103,11 +145,18 @@ function connect() {
                         " / " +
                         data.maxHp +
                         ")";
-                    // ✅ HP 바도 같이 갱신
                     updateBossHp(data.bossHp, data.maxHp);
                 }
                 cssClass = "system";
                 break;
+
+            case "PARTY_UPDATE":
+                console.log("PARTY_UPDATE 수신:", data.party);
+                if (Array.isArray(data.party)) {
+                    renderParty(data.party);
+                }
+                // 채팅창에는 따로 출력 안 하고 종료
+                return;
 
             default:
                 text =
@@ -144,7 +193,6 @@ function sendMessage() {
     }
 
     if (text.startsWith("/atk")) {
-        // 공격 명령: /atk 100 형태
         const parts = text.split(" ");
         let damage = null;
 
@@ -164,7 +212,6 @@ function sendMessage() {
 
         socket.send(JSON.stringify(attackMsg));
     } else {
-        // 일반 채팅
         const msg = {
             type: "CHAT",
             sender: username,

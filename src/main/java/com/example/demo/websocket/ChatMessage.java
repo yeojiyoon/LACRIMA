@@ -1,15 +1,23 @@
 package com.example.demo.websocket;
 
+import com.example.demo.game.PartyMemberView;
+
+import java.util.List;
+
 public class ChatMessage {
 
     private MessageType type;
     private String roomId;
     private String sender;
     private String message;
+
     private Integer damage;
     private Integer bossHp;
     private Integer maxHp;
+
     private String timestamp;
+
+    private List<PartyMemberView> party;
 
     public ChatMessage() {}
 
@@ -105,4 +113,7 @@ public class ChatMessage {
                 ", timestamp='" + timestamp + '\'' +
                 '}';
     }
+
+    public List<PartyMemberView> getParty() { return party; }
+    public void setParty(List<PartyMemberView> party) { this.party = party; }
 }

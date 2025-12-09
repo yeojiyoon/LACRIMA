@@ -15,13 +15,13 @@ public class AuthController {
 
     private final UserAccountRepository userRepo;
 
-    public AuthController(UserAccountRepository userRepo) {
+    public AuthController(UserAccountRepository userRepo) { //init 시점 부팅한 repo 받아옴
         this.userRepo = userRepo;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) {
-        Optional<UserAccount> opt = userRepo.findByUsername(request.getUsername());
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) { //login.html 에서 session body 전달
+        Optional<UserAccount> opt = userRepo.findByUsername(request.getUsername()); //유저 DB 검색(후에 sql 등으로 교체)
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("존재하지 않는 사용자입니다.");
@@ -37,6 +37,7 @@ public class AuthController {
 
         // 세션에 로그인 정보 저장
         session.setAttribute("loginUser", user);
+        session.setMaxInactiveInterval(80 * 60);
 
         LoginResponse res = new LoginResponse(
                 user.getUsername(),
@@ -44,7 +45,7 @@ public class AuthController {
                 user.getRole()
         );
 
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(res); //로그인 승인 리턴
     }
 
     @PostMapping("/logout")

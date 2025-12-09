@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class DataInitConfig {
 
     @Bean
-    public CommandLineRunner initUsers(UserAccountRepository userRepo) {
+    public CommandLineRunner initUsers(UserAccountRepository userRepo) { //부팅할때 userRepo에 set (나중에 관련 line DB로 교체)
         return args -> {
             if (userRepo.count() == 0) {
 

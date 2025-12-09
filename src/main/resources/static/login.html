@@ -3,58 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>로그인</title>
+    <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
-<h1>로그인</h1>
+<div class="login-page">
+    <div class="login-card">
+        <h1 class="login-title">Boss Raid Login</h1>
+        <p class="login-subtitle">자캐와 함께 레이드에 입장하세요</p>
 
-<label>
-    아이디:
-    <input id="username" type="text">
-</label>
-<br>
-<label>
-    비밀번호:
-    <input id="password" type="password">
-</label>
-<br>
-<button onclick="login()">로그인</button>
+        <div class="login-form">
+            <label class="field">
+                <span class="field-label">아이디</span>
+                <input id="username" type="text" placeholder="아이디를 입력하세요">
+            </label>
 
-<p id="result"></p>
+            <label class="field">
+                <span class="field-label">비밀번호</span>
+                <input id="password" type="password" placeholder="비밀번호를 입력하세요">
+            </label>
 
-<script>
-    async function login() {
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-        const resultEl = document.getElementById("result");
+            <button id="login-btn" class="login-button">로그인</button>
 
-        if (!username || !password) {
-            resultEl.textContent = "아이디와 비밀번호를 입력하세요.";
-            return;
-        }
+            <p id="result" class="login-result"></p>
+        </div>
+    </div>
+</div>
 
-        try {
-            const res = await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (!res.ok) {
-                const text = await res.text();
-                resultEl.textContent = "로그인 실패: " + text;
-                return;
-            }
-
-            const data = await res.json();
-            resultEl.textContent = "로그인 성공: " + data.username + " (" + data.role + ")";
-
-            // 여기에서 원하는 페이지로 이동
-            location.href = "/raid-room";
-        } catch (e) {
-            console.error(e);
-            resultEl.textContent = "요청 중 오류가 발생했습니다.";
-        }
-    }
-</script>
+<script src="/js/login.js"></script>
 </body>
 </html>

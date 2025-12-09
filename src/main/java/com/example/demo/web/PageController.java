@@ -14,12 +14,30 @@ public class PageController {
         return "redirect:/login.html";
     }
 
+    @GetMapping("/my-page")
+    public String myPage(HttpSession session, Model model) {
+        UserAccount user = (UserAccount) session.getAttribute("loginUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("nickname", user.getNickname());
+        model.addAttribute("role", user.getRole());
+
+        // TODO: 유저 → 캐릭터 매핑 넣기
+        // GameCharacter character = characterService.findByOwner(user.getUsername());
+        // model.addAttribute("character", character);
+
+        return "my-page"; // templates/my-page.html
+    }
+
     @GetMapping("/raid-room")
     public String raidRoom(HttpSession session, Model model) {
 
         UserAccount user = (UserAccount) session.getAttribute("loginUser");
 
-        if (user == null) {
+        if (user == null) { //로그인 안되어있을경우
             return "redirect:/login";
         }
 

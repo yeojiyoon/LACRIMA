@@ -52,4 +52,17 @@ public class BossMonster {
     public boolean isDead() {
         return currentHp <= 0;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setMaxHp(long maxHp) {
+        this.maxHp = maxHp;
+        // maxHp 바뀌면 currentHp가 너무 크지 않게 보정
+        if (this.currentHp > maxHp) {
+            this.currentHp = maxHp;
+        }
+    }
+
 }

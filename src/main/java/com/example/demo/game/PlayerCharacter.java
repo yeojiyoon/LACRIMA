@@ -101,4 +101,52 @@ public class PlayerCharacter {
     public boolean isDead() {
         return this.currentHp <= 0;
     }
+
+    // 이름 변경
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // 공격력
+    public void setAtk(int atk) {
+        this.atk = atk;
+    }
+
+    // 지력
+    public void setIntelligence(int intelligence) {
+        this.intelligence = intelligence;
+    }
+
+    // HP 스탯(티어) + maxHp 재계산
+    public void setHp(int Hp) {
+        this.Hp = Hp;
+        switch (Hp) {
+            case 1 -> this.maxHp = 120;
+            case 2 -> this.maxHp = 140;
+            case 3 -> this.maxHp = 160;
+            case 4 -> this.maxHp = 180;
+            case 5 -> this.maxHp = 200;
+            default -> this.maxHp = 120; // 안전장치
+        }
+        // 현재 HP가 maxHp보다 크면 잘라주기
+        if (this.currentHp > this.maxHp) {
+            this.currentHp = (int) this.maxHp;
+        }
+    }
+
+    // 의지
+    public void setDet(int det) {
+        this.det = det;
+    }
+
+    // 행동 포인트 강제 세팅 (관리자용)
+    public void setActionPoint(int actionPoint) {
+        this.actionPoint = actionPoint;
+    }
+
+    // 유저 변경(필요하면)
+    public void setUser(UserAccount user) {
+        this.user = user;
+    }
+
 }

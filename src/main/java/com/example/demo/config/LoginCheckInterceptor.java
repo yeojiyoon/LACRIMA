@@ -14,6 +14,12 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
                              Object handler) throws Exception {
 
         String uri = request.getRequestURI();
+
+        // ✅ H2 콘솔은 로그인 체크 없이 통과
+        if (uri.startsWith("/h2-console")) {
+            return true;
+        }
+
         HttpSession session = request.getSession(false);
         UserAccount user = (session != null)
                 ? (UserAccount) session.getAttribute("loginUser")

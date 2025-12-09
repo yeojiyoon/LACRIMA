@@ -49,10 +49,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
+    public String logout(HttpSession session) {
         session.invalidate();
-        return ResponseEntity.ok("로그아웃 되었습니다.");
+        return "redirect:/login";
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<?> me(HttpSession session) {

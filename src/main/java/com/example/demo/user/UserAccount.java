@@ -22,7 +22,7 @@ public class UserAccount {
     @Column(nullable = true)
     private String nickname;   // 나중에 채팅에 사용할 닉네임
 
-    protected UserAccount() {
+    public UserAccount() {
     }
 
     public UserAccount(String username, String password, String role, String nickname) {

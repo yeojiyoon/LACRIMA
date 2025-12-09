@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>캐릭터 관리</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f4f4f4; }
+        a.button, button {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border-radius: 4px;
+            border: 1px solid #999;
+            background: #f9f9f9;
+            cursor: pointer;
+        }
+        header { margin-bottom: 16px; }
+        nav a { margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>캐릭터 관리</h1>
+    <nav>
+        <a th:href="@{/admin}">← 관리자 대시보드</a>
+        <a th:href="@{/admin/chars/new}" class="button">+ 새 캐릭터 추가</a>
+    </nav>
+    <hr/>
+</header>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>유저</th>
+        <th>닉네임</th>
+        <th>캐릭터 이름</th>
+        <th>ATK</th>
+        <th>INT</th>
+        <th>HP 스탯</th>
+        <th>MaxHP</th>
+        <th>CurrentHP</th>
+        <th>DET</th>
+        <th>AP</th>
+        <th>액션</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="c : ${characters}">
+        <td th:text="${c.id}">1</td>
+        <td th:text="${c.user.username}">admin</td>
+        <td th:text="${c.user.nickname}">관리자</td>
+        <td th:text="${c.name}">캐릭터</td>
+        <td th:text="${c.atk}">3</td>
+        <td th:text="${c.intelligence}">4</td>
+        <td th:text="${c.hp}">1</td>
+        <td th:text="${c.maxHp}">160</td>
+        <td th:text="${c.currentHp}">160</td>
+        <td th:text="${c.det}">5</td>
+        <td th:text="${c.actionPoint}">1</td>
+        <td>
+            <a th:href="@{|/admin/chars/${c.id}/edit|}" class="button">수정</a>
+
+            <form th:action="@{|/admin/chars/${c.id}/delete|}"
+                  method="post"
+                  style="display:inline"
+                  onsubmit="return confirm('정말 삭제할까요?');">
+                <button type="submit">삭제</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(characters)}">
+        <td colspan="12">등록된 캐릭터가 없습니다.</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -37,7 +37,13 @@ async function login() {
 
         // 잠깐 보여주고 내 정보 페이지로 이동
         setTimeout(() => {
-            window.location.href = "/my-page";
+            if (data.role == "ADMIN")
+            {
+                window.location.href = "/admin";
+            } else
+            {
+                window.location.href = "/my-page";
+            }
         }, 400);
     } catch (e) {
         console.error(e);

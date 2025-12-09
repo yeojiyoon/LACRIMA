@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>유저 관리</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        form div { margin-bottom: 10px; }
+        label { display: inline-block; width: 100px; }
+        input, select { padding: 4px; }
+        small { color: #777; }
+        header { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 th:text="${userForm.id} == null ? '새 유저 생성' : '유저 정보 수정'">
+        유저 편집
+    </h1>
+    <a th:href="@{/admin/users}">← 유저 목록으로</a>
+    <hr/>
+</header>
+
+<form th:object="${userForm}"
+      th:action="@{${formAction}}"
+      method="post">
+
+    <div>
+        <label for="username">Username</label>
+        <input id="username" type="text" th:field="*{username}" required>
+    </div>
+
+    <div>
+        <label for="nickname">Nickname</label>
+        <input id="nickname" type="text" th:field="*{nickname}">
+    </div>
+
+    <div>
+        <label for="role">Role</label>
+        <select id="role" th:field="*{role}">
+            <option value="USER">USER</option>
+            <option value="ADMIN">ADMIN</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="password">Password</label>
+        <input id="password" type="password" th:field="*{password}">
+        <small th:if="${userForm.id != null}">
+            (비워두면 비밀번호를 변경하지 않습니다.)
+        </small>
+    </div>
+
+    <button type="submit" th:text="${userForm.id} == null ? '유저 생성' : '저장'">
+        저장
+    </button>
+</form>
+
+</body>
+</html>

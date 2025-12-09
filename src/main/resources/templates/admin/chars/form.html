@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>캐릭터 관리</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        form div { margin-bottom: 10px; }
+        label { display: inline-block; width: 120px; }
+        input, select { padding: 4px; }
+        small { color: #777; }
+        header { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 th:text="${characterForm.id} == null ? '새 캐릭터 생성' : '캐릭터 수정'">
+        캐릭터 편집
+    </h1>
+    <a th:href="@{/admin/chars}">← 캐릭터 목록으로</a>
+    <hr/>
+</header>
+
+<form th:object="${characterForm}"
+      th:action="@{${formAction}}"
+      method="post">
+
+    <div>
+        <label for="userId">소유 유저</label>
+        <select id="userId" th:field="*{userId}" required>
+            <option th:each="u : ${users}"
+                    th:value="${u.id}"
+                    th:text="${u.username} + ' (' + (${u.nickname} == null ? '' : u.nickname) + ')'">
+                user
+            </option>
+        </select>
+    </div>
+
+    <div>
+        <label for="name">캐릭터 이름</label>
+        <input id="name" type="text" th:field="*{name}" required>
+    </div>
+
+    <div>
+        <label for="atk">ATK</label>
+        <input id="atk" type="number" th:field="*{atk}" min="0" required>
+    </div>
+
+    <div>
+        <label for="intelligence">INT</label>
+        <input id="intelligence" type="number" th:field="*{intelligence}" min="0" required>
+    </div>
+
+    <div>
+        <label for="hp">HP 스탯(1~5)</label>
+        <input id="hp" type="number" th:field="*{hp}" min="1" max="5" required>
+        <small>HP 스탯에 따라 MaxHP가 자동 계산됩니다.</small>
+    </div>
+
+    <div>
+        <label for="det">DET</label>
+        <input id="det" type="number" th:field="*{det}" min="0" required>
+    </div>
+
+    <div>
+        <label for="currentHp">현재 HP</label>
+        <input id="currentHp" type="number" th:field="*{currentHp}" min="0" required>
+    </div>
+
+    <div>
+        <label for="actionPoint">행동 포인트</label>
+        <input id="actionPoint" type="number" th:field="*{actionPoint}" min="0" required>
+    </div>
+
+    <button type="submit"
+            th:text="${characterForm.id} == null ? '캐릭터 생성' : '저장'">
+        저장
+    </button>
+</form>
+
+</body>
+</html>

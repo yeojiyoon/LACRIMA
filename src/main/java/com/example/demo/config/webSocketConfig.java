@@ -7,7 +7,6 @@ import com.example.demo.game.BossService;
 import com.example.demo.game.PlayerCharacterService;
 import com.example.demo.game.RaidPartyService;
 import com.example.demo.websocket.ChatHandler;
-import com.example.demo.websocket.EchoWebSocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;

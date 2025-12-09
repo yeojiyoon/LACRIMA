@@ -88,12 +88,20 @@ function updateBossHp(current, max) {
 // === WebSocket 연결 ===
 function connect() {
     console.log("웹소켓 연결 시도");
-    socket = new WebSocket("ws://" + window.location.host + "/ws/chat");
+
+    // 현재 페이지 프로토콜에 따라 ws 또는 wss 자동 선택
+    const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    const host = window.location.host;
+
+    const wsUrl = wsProtocol + host + "/ws/chat";
+    console.log("Connecting to:", wsUrl);
+
+    socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
         console.log("onopen");
         setStatus("✅ 서버와 연결되었습니다. (방: " + roomId + ")");
-        addMessage("시스템: " + roomId + " 방에 입장 시도 중...", "system");
+        addMessage("시스템: " + roomId + " 방에 입장합니다.", "system");
 
         const joinMsg = {
             type: "JOIN",
@@ -155,7 +163,6 @@ function connect() {
                 if (Array.isArray(data.party)) {
                     renderParty(data.party);
                 }
-                // 채팅창에는 따로 출력 안 하고 종료
                 return;
 
             default:
@@ -174,8 +181,11 @@ function connect() {
 
     socket.onclose = (event) => {
         console.log("onclose:", event);
-        setStatus("❌ 연결이 종료되었습니다. (새로고침으로 재접속 가능)");
+        setStatus("❌ 연결이 종료되었습니다. (3초 후 재접속)");
         addMessage("시스템: 연결이 종료되었습니다.", "system");
+
+        // 재접속 시도 — Fly.io는 잠시 스케일링될 수 있어서 필요함
+        setTimeout(connect, 3000);
     };
 
     socket.onerror = (error) => {
@@ -184,6 +194,7 @@ function connect() {
         addMessage("시스템: 연결 오류가 발생했습니다.", "system");
     };
 }
+
 
 // === 메시지 보내기 ===
 function sendMessage() {

@@ -15,12 +15,23 @@ public class PlayerCharacterService {
     // UserAccount로 캐릭터 찾기
     public PlayerCharacter findByUser(UserAccount user) {
         return playerCharacterRepository.findByUser(user)
-                .orElse(null); // 없으면 null → 템플릿에서 '미등록' 처리
+                .orElse(null);
     }
 
-    // username 문자열로 찾고 싶으면 이렇게도 가능
+    // username 문자열로 찾기
     public PlayerCharacter findByUsername(String username) {
         return playerCharacterRepository.findByUserUsername(username)
                 .orElse(null);
+    }
+
+    // 🔹 id로 조회
+    public PlayerCharacter findById(Long id) {
+        return playerCharacterRepository.findById(id)
+                .orElse(null);
+    }
+
+    // 🔹 저장
+    public PlayerCharacter save(PlayerCharacter pc) {
+        return playerCharacterRepository.save(pc);
     }
 }

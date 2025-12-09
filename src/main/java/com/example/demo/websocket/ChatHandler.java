@@ -199,7 +199,6 @@ public class ChatHandler extends TextWebSocketHandler {
     private void handleAttack(WebSocketSession session, ChatMessage msg) throws Exception {
         String roomId = resolveRoomId(session, msg);
         if (roomId == null) {
-            // 방에 안 들어와 있으면 경고
             ChatMessage warn = new ChatMessage();
             warn.setType(MessageType.SYSTEM);
             warn.setSender("SYSTEM");
@@ -214,26 +213,32 @@ public class ChatHandler extends TextWebSocketHandler {
         }
 
         try {
-            // 🔹 username 기준으로 캐릭터 찾아오기
+            // 1) 캐릭터 조회
             PlayerCharacter pc = playerCharacterService.findByUsername(username);
 
-            // 🔹 이제 보스/레이드 관련 로직은 전부 RaidGameService로 위임
+            // 2) 공격 처리 (여기서 보스 HP 감소 + 필요하면 보스 턴 + 파티 HP 감소)
             AttackResult result = raidGameService.handleAttack(roomId, username, pc);
 
+            // 3) 공격 결과 메시지 브로드캐스트
             ChatMessage resultMsg = new ChatMessage();
             resultMsg.setType(MessageType.ATTACK_RESULT);
             resultMsg.setSender("SYSTEM");
             resultMsg.setRoomId(roomId);
             resultMsg.setMessage(result.getMessage());
-
-            if (result.getBossHp() != null) {
-                resultMsg.setBossHp(result.getBossHp());
-            }
-            if (result.getMaxHp() != null) {
-                resultMsg.setMaxHp(result.getMaxHp());
-            }
+            resultMsg.setDamage(result.getDamage());
+            resultMsg.setBossHp(result.getBossHp());
+            resultMsg.setMaxHp(result.getMaxHp());
+            // 턴 정보도 쓰고 싶으면 여기서 같이 세팅
+            // resultMsg.setTurn(result.getTurn());
+            // resultMsg.setTurnEnded(result.isTurnEnded());
 
             broadcastToRoom(roomId, resultMsg);
+
+            // 4) 🔥 턴이 끝났다면 (보스 턴까지 끝났다는 뜻)
+            //    → 바뀐 파티원 HP를 PARTY_UPDATE로 다시 브로드캐스트
+            if (result.isTurnEnded()) {
+                sendPartyUpdate(roomId);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -247,6 +252,7 @@ public class ChatHandler extends TextWebSocketHandler {
             broadcastToRoom(roomId, errorMsg);
         }
     }
+
 
 
     // 사용자가 LEAVE 타입을 직접 보냈을 때 (선택)

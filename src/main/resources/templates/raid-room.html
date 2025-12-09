@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Boss Raid</title>
+
+    <!-- 외부 CSS 링크 -->
+    <link rel="stylesheet" th:href="@{/css/raid-room.css}">
+</head>
+<body>
+
+<div class="top-bar">
+    <!-- 로그인 유저 정보 표시 -->
+    <span th:text="'Player: ' + ${username}"></span>
+    <span th:if="${character != null}"
+          th:text="' | Character: ' + ${character.name}"></span>
+</div>
+
+<div class="raid-container">
+
+    <!-- ===== LEFT: 보스 & 파티 ===== -->
+    <div class="raid-left">
+        <!-- 보스 영역 -->
+        <div class="boss-area">
+            <div class="section-title">Boss</div>
+            <div class="boss-name" id="boss-name">Dark Dragon</div>
+            <div class="hp-bar-wrapper">
+                <div class="hp-bar-fill" id="boss-hp-bar"></div>
+            </div>
+            <div class="hp-text" id="boss-hp-text">HP 7000 / 10000 (70%)</div>
+        </div>
+
+        <!-- 파티 영역 -->
+        <div class="party-area">
+            <div class="section-title">Party</div>
+
+            <!-- 서버에서 캐릭터 리스트 넘겨주면 th:each로 렌더 -->
+            <div th:each="member : ${partyMembers}" class="character-row">
+                <div class="character-name" th:text="${member.name}">Player1</div>
+                <div class="char-hp-wrapper">
+                    <div class="char-hp-fill"
+                         th:attr="style=|width: ${member.hpRatio}%|"></div>
+                </div>
+                <div class="char-hp-text"
+                     th:text="${member.hp} + ' / ' + ${member.maxHp}">
+                    100 / 100
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RIGHT: 채팅 ===== -->
+    <div class="raid-right">
+        <div class="chat-header">Raid Chat</div>
+
+        <!-- ✅ 상태 표시 한 줄 추가 -->
+        <div id="chat-status" class="chat-status">연결 대기중...</div>
+
+        <!-- ✅ username / roomId를 data-*로 넣어줌 -->
+        <div class="chat-window"
+             id="chat-window"
+             th:attr="data-username=${username}, data-room-id='raid-1'">
+            <!-- WebSocket에서 온 메시지들이 여기 append -->
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="메시지를 입력하세요">
+            <button id="chat-send-btn">Send</button>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- 외부 JS 파일 -->
+<script th:src="@{/js/raid-room.js}"></script>
+</body>
+</html>

@@ -105,7 +105,14 @@ public class PageController {
         RaidScenario scenario = raidScenarioRepository.findById(scenarioId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 레이드 세트를 찾을 수 없습니다."));
 
+        // 🔥 공통 유저 정보
         model.addAttribute("username", user.getUsername());
+        model.addAttribute("role", user.getRole());
+
+        // 🔥 여기! ADMIN 여부 플래그
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        model.addAttribute("isAdmin", isAdmin);
+
         model.addAttribute("scenario", scenario);
 
         // 내 캐릭터
@@ -136,8 +143,9 @@ public class PageController {
             model.addAttribute("bossMaxHp", 1000);
         }
 
-        // 레이드방 입장 시 파티에 나를 추가
-        if (me != null) {
+        // 🔥 레이드방 입장 시 파티에 나를 추가
+        // → ADMIN 은 관전/조작만 하게 하려면 제외하는 게 자연스러움
+        if (!isAdmin && me != null) {
             raidPartyService.join(roomId, me);
         }
 
@@ -147,4 +155,7 @@ public class PageController {
 
         return "raid-room";
     }
+
+
+
 }

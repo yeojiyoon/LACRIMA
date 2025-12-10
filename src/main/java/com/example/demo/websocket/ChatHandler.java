@@ -1,6 +1,7 @@
 package com.example.demo.websocket;
 
 import com.example.demo.game.*;
+import com.example.demo.user.UserAccountRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -31,18 +32,27 @@ public class ChatHandler extends TextWebSocketHandler {
     private final RaidGameService raidGameService;
     private final PlayerCharacterService playerCharacterService;
     private final RaidPartyService raidPartyService;
+    private final UserAccountRepository userAccountRepository;
+
+    // 🔐 username 기준 ADMIN 체크
+    private boolean isAdmin(String username) {
+        return userAccountRepository.findByUsername(username)
+                .map(user -> "ADMIN".equalsIgnoreCase(user.getRole()))
+                .orElse(false);
+    }
 
     public ChatHandler(RaidGameService raidGameService,
                        PlayerCharacterService playerCharacterService,
-                       RaidPartyService raidPartyService) {
+                       RaidPartyService raidPartyService,
+                       UserAccountRepository userAccountRepository) {
         this.raidGameService = raidGameService;
         this.playerCharacterService = playerCharacterService;
         this.raidPartyService = raidPartyService;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // 아직 방에 넣지는 않고, 전체 접속자에만 추가
         if (allSessions.size() >= MAX_USERS) {
             session.sendMessage(new TextMessage("방이 가득 찼습니다."));
             session.close(CloseStatus.POLICY_VIOLATION);
@@ -53,7 +63,6 @@ public class ChatHandler extends TextWebSocketHandler {
         allSessions.add(session);
         String username = getUsername(session);
         System.out.println("새 연결: " + username);
-        // 실질적인 "입장" 알림은 JOIN 메시지를 받았을 때 처리
     }
 
     @Override
@@ -67,7 +76,6 @@ public class ChatHandler extends TextWebSocketHandler {
         try {
             chatMessage = objectMapper.readValue(payload, ChatMessage.class);
         } catch (Exception e) {
-            // JSON 아니면 비상용: 그냥 채팅으로 처리
             chatMessage = new ChatMessage();
             chatMessage.setType(MessageType.CHAT);
             chatMessage.setSender(username);
@@ -90,6 +98,12 @@ public class ChatHandler extends TextWebSocketHandler {
                 break;
             case ATTACK:
                 handleAttack(session, chatMessage);
+                break;
+            case DEFEND:
+                handleDefend(session, chatMessage);
+                break;
+            case ADMIN:
+                handleAdmin(session, chatMessage);
                 break;
             case CHAT:
             default:
@@ -114,7 +128,6 @@ public class ChatHandler extends TextWebSocketHandler {
                 }
             }
 
-            // 🔹 파티에서 캐릭터 제거
             Long charId = sessionCharacter.remove(session);
             if (charId != null) {
                 raidPartyService.leave(roomId, charId);
@@ -129,7 +142,6 @@ public class ChatHandler extends TextWebSocketHandler {
 
             broadcastToRoom(roomId, systemMsg);
 
-            // 🔹 파티 정보 갱신
             sendPartyUpdate(roomId);
         }
 
@@ -144,37 +156,41 @@ public class ChatHandler extends TextWebSocketHandler {
         String roomId = msg.getRoomId();
 
         if (roomId == null || roomId.isBlank()) {
-            roomId = "lobby"; // 기본 방 이름
+            roomId = "lobby";
             msg.setRoomId(roomId);
         }
 
-        // 방 세션 set 가져오기 (없으면 새로 만듦)
         Set<WebSocketSession> roomSessions =
                 rooms.computeIfAbsent(roomId, id -> ConcurrentHashMap.newKeySet());
 
         roomSessions.add(session);
         sessionRoom.put(session, roomId);
 
-        System.out.println("JOIN: " + username + " -> " + roomId +
-                " (인원: " + roomSessions.size() + ")");
+        boolean admin = isAdmin(username);
 
-        // 🔹 sender 이름 기준으로 PlayerCharacter 찾기
-        PlayerCharacter pc = playerCharacterService.findByUsername(username);
-        if (pc != null) {
-            sessionCharacter.put(session, pc.getId()); // 세션 → 캐릭터 ID 저장
-            raidPartyService.join(roomId, pc); // 파티에 등록
+        // ADMIN은 파티에 안 넣고, 일반 유저만 파티에 추가
+        if (!admin) {
+            PlayerCharacter pc = playerCharacterService.findByUsername(username);
+            if (pc != null) {
+                sessionCharacter.put(session, pc.getId());
+                raidPartyService.join(roomId, pc);
+            }
         }
+
+        int partyCount = raidPartyService.getPartyMembers(roomId).size();
 
         ChatMessage systemMsg = new ChatMessage();
         systemMsg.setType(MessageType.SYSTEM);
         systemMsg.setSender("SYSTEM");
         systemMsg.setRoomId(roomId);
-        systemMsg.setMessage(username + "님이 " + roomId +
-                " 방에 입장했습니다. 현재 인원: " + roomSessions.size());
+
+        if (admin) {
+            systemMsg.setMessage("관리자 " + username + "이(가) 방에 입장했습니다. (파티: " + partyCount + ")");
+        } else {
+            systemMsg.setMessage(username + "님이 방에 입장했습니다. (파티: " + partyCount + ")");
+        }
 
         broadcastToRoom(roomId, systemMsg);
-
-        // 🔹 파티 정보 전체 브로드캐스트
         sendPartyUpdate(roomId);
     }
 
@@ -182,7 +198,6 @@ public class ChatHandler extends TextWebSocketHandler {
     private void handleChat(WebSocketSession session, ChatMessage msg) throws Exception {
         String roomId = resolveRoomId(session, msg);
         if (roomId == null) {
-            // 방에 속해있지 않으면 안내만 보내고 무시
             ChatMessage warn = new ChatMessage();
             warn.setType(MessageType.SYSTEM);
             warn.setSender("SYSTEM");
@@ -212,34 +227,72 @@ public class ChatHandler extends TextWebSocketHandler {
             username = getUsername(session);
         }
 
+        String comment = msg.getComment();
+
         try {
-            // 1) 캐릭터 조회
             PlayerCharacter pc = playerCharacterService.findByUsername(username);
 
-            // 2) 공격 처리 (여기서 보스 HP 감소 + 필요하면 보스 턴 + 파티 HP 감소)
+            if (pc != null && pc.getActionPoint() <= 0) {
+                ChatMessage warn = new ChatMessage();
+                warn.setType(MessageType.SYSTEM);
+                warn.setSender("SYSTEM");
+                warn.setRoomId(roomId);
+                warn.setMessage(pc.getName() + "는 이미 이번 턴에 행동했습니다.");
+                sendToSession(session, warn);
+                return;
+            }
+
             AttackResult result = raidGameService.handleAttack(roomId, username, pc);
 
-            // 3) 공격 결과 메시지 브로드캐스트
             ChatMessage resultMsg = new ChatMessage();
             resultMsg.setType(MessageType.ATTACK_RESULT);
-            resultMsg.setSender("SYSTEM");
+            resultMsg.setSender(username);
             resultMsg.setRoomId(roomId);
             resultMsg.setMessage(result.getMessage());
             resultMsg.setDamage(result.getDamage());
             resultMsg.setBossHp(result.getBossHp());
             resultMsg.setMaxHp(result.getMaxHp());
-            // 턴 정보도 쓰고 싶으면 여기서 같이 세팅
-            // resultMsg.setTurn(result.getTurn());
-            // resultMsg.setTurnEnded(result.isTurnEnded());
+            resultMsg.setComment(comment);
+            resultMsg.setTurn(result.getTurn());
 
             broadcastToRoom(roomId, resultMsg);
 
-            // 4) 🔥 턴이 끝났다면 (보스 턴까지 끝났다는 뜻)
-            //    → 바뀐 파티원 HP를 PARTY_UPDATE로 다시 브로드캐스트
             if (result.isTurnEnded()) {
-                sendPartyUpdate(roomId);
-            }
 
+                var bossHits = result.getBossHits();
+                if (bossHits != null) {
+                    for (RaidGameService.BossHit hit : bossHits) {
+                        ChatMessage bossMsg = new ChatMessage();
+                        bossMsg.setType(MessageType.BOSS_ATTACK);
+                        bossMsg.setSender("BOSS");
+                        bossMsg.setRoomId(roomId);
+
+                        bossMsg.setTargetName(hit.getName());
+                        bossMsg.setDamage(hit.getDamage());
+                        bossMsg.setTargetHp(hit.getHpAfter());
+                        bossMsg.setTargetMaxHp(hit.getMaxHp());
+                        bossMsg.setDefense(hit.getDefense());
+
+                        // 🔥 이 공격은 "이번 턴"에 일어남
+                        bossMsg.setTurn(result.getTurn());
+
+                        broadcastToRoom(roomId, bossMsg);
+                    }
+                }
+
+                // 파티 HP 갱신
+                sendPartyUpdate(roomId);
+
+                // 🔥 여기서 "다음 턴 시작" 알림을 별도로 보냄
+                int nextTurn = raidGameService.getTurn(roomId); // 방금 nextTurn() 한 값
+                ChatMessage turnMsg = new ChatMessage();
+                turnMsg.setType(MessageType.TURN_START);
+                turnMsg.setRoomId(roomId);
+                turnMsg.setTurn(nextTurn);
+                turnMsg.setMessage("보스가 다시 당신들을 주시한다."); //아마 여기서 공격대상 언급
+
+                broadcastToRoom(roomId, turnMsg);
+            }
         } catch (Exception e) {
             e.printStackTrace();
 
@@ -253,9 +306,97 @@ public class ChatHandler extends TextWebSocketHandler {
         }
     }
 
+    // 방어
+    private void handleDefend(WebSocketSession session, ChatMessage msg) throws Exception {
+        String roomId = resolveRoomId(session, msg);
+        if (roomId == null) {
+            ChatMessage warn = new ChatMessage();
+            warn.setType(MessageType.SYSTEM);
+            warn.setSender("SYSTEM");
+            warn.setMessage("먼저 방에 입장(JOIN)해야 방어할 수 있습니다.");
+            sendToSession(session, warn);
+            return;
+        }
 
+        String username = msg.getSender();
+        if (username == null || username.isBlank()) {
+            username = getUsername(session);
+        }
 
-    // 사용자가 LEAVE 타입을 직접 보냈을 때 (선택)
+        Long targetCharId = msg.getTargetCharacterId();
+        if (targetCharId == null) {
+            ChatMessage warn = new ChatMessage();
+            warn.setType(MessageType.SYSTEM);
+            warn.setSender("SYSTEM");
+            warn.setRoomId(roomId);
+            warn.setMessage("방어 대상을 선택해야 합니다.");
+            sendToSession(session, warn);
+            return;
+        }
+
+        PlayerCharacter defender = playerCharacterService.findByUsername(username);
+        if (defender == null) {
+            ChatMessage warn = new ChatMessage();
+            warn.setType(MessageType.SYSTEM);
+            warn.setSender("SYSTEM");
+            warn.setRoomId(roomId);
+            warn.setMessage("캐릭터 정보가 없어 방어할 수 없습니다.");
+            sendToSession(session, warn);
+            return;
+        }
+
+        AttackResult result =
+                raidGameService.handleDefend(roomId, defender, targetCharId, msg.getComment());
+
+        ChatMessage resultMsg = new ChatMessage();
+        resultMsg.setType(MessageType.DEFEND_RESULT);
+        resultMsg.setSender(username);
+        resultMsg.setRoomId(roomId);
+        resultMsg.setMessage(result.getMessage());
+        resultMsg.setDamage(result.getDamage());
+        resultMsg.setBossHp(result.getBossHp());
+        resultMsg.setMaxHp(result.getMaxHp());
+        resultMsg.setComment(msg.getComment());
+        resultMsg.setTurn(result.getTurn());
+
+        broadcastToRoom(roomId, resultMsg);
+
+        if (result.isTurnEnded()) {
+
+            var bossHits = result.getBossHits();
+            if (bossHits != null) {
+                for (RaidGameService.BossHit hit : bossHits) {
+                    ChatMessage bossMsg = new ChatMessage();
+                    bossMsg.setType(MessageType.BOSS_ATTACK);
+                    bossMsg.setSender("BOSS");
+                    bossMsg.setRoomId(roomId);
+
+                    bossMsg.setTargetName(hit.getName());
+                    bossMsg.setDamage(hit.getDamage());
+                    bossMsg.setTargetHp(hit.getHpAfter());
+                    bossMsg.setTargetMaxHp(hit.getMaxHp());
+                    bossMsg.setDefense(hit.getDefense());
+
+                    bossMsg.setTurn(result.getTurn()); // 🔥 현재 턴
+
+                    broadcastToRoom(roomId, bossMsg);
+                }
+            }
+
+            sendPartyUpdate(roomId);
+
+            int nextTurn = raidGameService.getTurn(roomId);
+            ChatMessage turnMsg = new ChatMessage();
+            turnMsg.setType(MessageType.TURN_START);
+            turnMsg.setRoomId(roomId);
+            turnMsg.setTurn(nextTurn);
+            turnMsg.setMessage("보스가 다시 당신들을 주시한다.");
+
+            broadcastToRoom(roomId, turnMsg);
+        }
+    }
+
+    // LEAVE
     private void handleLeave(WebSocketSession session, ChatMessage msg) throws Exception {
         String username = msg.getSender();
         String roomId = sessionRoom.get(session);
@@ -273,7 +414,6 @@ public class ChatHandler extends TextWebSocketHandler {
         }
         sessionRoom.remove(session);
 
-        // 🔹 파티에서 제거
         Long charId = sessionCharacter.remove(session);
         if (charId != null) {
             raidPartyService.leave(roomId, charId);
@@ -283,18 +423,61 @@ public class ChatHandler extends TextWebSocketHandler {
         systemMsg.setType(MessageType.SYSTEM);
         systemMsg.setSender("SYSTEM");
         systemMsg.setRoomId(roomId);
+        int partyCount = raidPartyService.getPartyMembers(roomId).size();
         systemMsg.setMessage(username + "님이 방에서 나갔습니다. 현재 인원: " +
-                (roomSessions != null ? roomSessions.size() : 0));
+                (roomSessions != null ? partyCount : 0));
 
         broadcastToRoom(roomId, systemMsg);
-
-        // 🔹 파티 정보 갱신
         sendPartyUpdate(roomId);
+    }
+
+    // ================== ADMIN 처리 ==================
+
+    private void handleAdmin(WebSocketSession session, ChatMessage msg) throws Exception {
+        String username = msg.getSender();
+        if (username == null || username.isBlank()) {
+            username = getUsername(session);
+        }
+
+        // 🔐 DB role 기반 체크
+        if (!isAdmin(username)) {
+            ChatMessage warn = new ChatMessage();
+            warn.setType(MessageType.SYSTEM);
+            warn.setSender("SYSTEM");
+            warn.setMessage("관리자 권한이 없습니다.");
+            sendToSession(session, warn);
+            return;
+        }
+
+        String roomId = resolveRoomId(session, msg);
+        if (roomId == null || roomId.isBlank()) {
+            roomId = msg.getRoomId();
+        }
+        if (roomId == null || roomId.isBlank()) {
+            roomId = "raid-1"; // 기본값
+        }
+
+        String command = msg.getCommand();
+
+        if ("START_BATTLE".equals(command)) {
+            // 1) 서버 쪽 턴 1턴으로 초기화
+            raidGameService.startBattle(roomId);
+
+            // 2) 모든 클라이언트에게 턴 시작 알림
+            ChatMessage turnMsg = new ChatMessage();
+            turnMsg.setType(MessageType.TURN_START);
+            turnMsg.setRoomId(roomId);
+            turnMsg.setTurn(1);
+            turnMsg.setMessage("전투가 시작되었습니다! 보스가 당신들을 주시한다.");
+
+            broadcastToRoom(roomId, turnMsg);
+        }
+
+        // TODO: FORCE_NEXT_TURN 등 추가 커맨드 나중에 더 넣기
     }
 
     // ================== 유틸 ==================
 
-    // 메시지/세션에서 roomId 결정
     private String resolveRoomId(WebSocketSession session, ChatMessage msg) {
         String roomId = msg.getRoomId();
         if (roomId != null && !roomId.isBlank()) {
@@ -336,7 +519,6 @@ public class ChatHandler extends TextWebSocketHandler {
         return session.getId();
     }
 
-    // 🔹 파티 정보 전체를 PARTY_UPDATE로 브로드캐스트
     private void sendPartyUpdate(String roomId) throws Exception {
         var partyList = raidPartyService.getPartyMembers(roomId);
 

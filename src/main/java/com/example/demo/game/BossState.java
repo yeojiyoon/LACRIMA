@@ -10,10 +10,10 @@ public class BossState {
     public BossState() {
     }
 
-    public BossState(String roomId, int maxHp, int hp, boolean dead) {
+    public BossState(String roomId, int hp, int maxHp, boolean dead) {
         this.roomId = roomId;
-        this.maxHp = maxHp;
         this.hp = hp;
+        this.maxHp = maxHp;
         this.dead = dead;
     }
 

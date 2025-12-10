@@ -100,12 +100,10 @@ public class BossService {
 
         if (newHp == 0) {
             boss.setDead(true);
-            return attacker + "이(가) 보스를 처치했습니다! (방: " + roomId +
-                    ", 보스 HP: 0/" + boss.getMaxHp() + ")";
+            return attacker + "이(가) 보스를 처치했습니다!";  // ✅ 방/HP 정보 빼기
         }
 
-        return attacker + "이(가) " + actualDamage + "의 피해를 입혔습니다. " +
-                "(방: " + roomId + ", 보스 HP: " + newHp + "/" + boss.getMaxHp() + ")";
+        return attacker + "이(가) " + actualDamage + "의 피해를 입혔습니다.";
     }
 
     /**

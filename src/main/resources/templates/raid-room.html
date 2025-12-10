@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Boss Raid</title>
     <link rel="stylesheet" th:href="@{/css/raid-room.css}">
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <script src="/js/global.js" defer></script>
 </head>
 <body>
 
@@ -14,6 +16,13 @@
     <span th:text="' | Raid: ' + ${scenario.name}"></span>
     <span th:if="${scenario.bossName != null}"
           th:text="' | Boss: ' + ${scenario.bossName}"></span>
+
+    <!-- 🔥 ADMIN 전용 전투 시작 버튼 -->
+    <button id="admin-start-btn"
+            th:if="${isAdmin}"
+            class="admin-start-btn">
+        전투 시작
+    </button>
 </div>
 
 <div class="raid-container">
@@ -38,7 +47,6 @@
         <div class="party-area">
             <div class="section-title">Party</div>
 
-            <!-- 서버에서 캐릭터 리스트 넘겨주면 th:each로 렌더 -->
             <div th:each="member : ${partyMembers}" class="character-row">
                 <div class="character-name" th:text="${member.name}">Player1</div>
                 <div class="char-hp-wrapper">
@@ -64,15 +72,35 @@
         </div>
 
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="메시지를 입력하세요">
-            <button id="chat-send-btn">Send</button>
+            <input id="chat-input"
+                   type="text"
+                   placeholder="메시지를 입력하세요">
+            <button id="chat-send-btn">보내기</button>
+        </div>
+
+        <div class="action-row">
+            <label>
+                <input type="radio" name="action-mode" value="CHAT" checked>
+                💬 채팅
+            </label>
+            <label>
+                <input type="radio" name="action-mode" value="ATTACK">
+                🗡 공격
+            </label>
+            <label>
+                <input type="radio" name="action-mode" value="DEFEND">
+                🛡 방어
+            </label>
+
+            <select id="defend-target-select" disabled>
+                <option value="">방어 대상 선택</option>
+                <!-- PARTY_UPDATE 받을 때 여기 옵션 채움 -->
+            </select>
         </div>
     </div>
 
-
 </div>
 
-<!-- 외부 JS 파일 -->
 <script th:src="@{/js/raid-room.js}"></script>
 </body>
 </html>

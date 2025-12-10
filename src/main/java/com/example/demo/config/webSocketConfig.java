@@ -1,12 +1,9 @@
 package com.example.demo.config;
 
-//설정파일 (서버)
-//웹소켓 설정 (엔드포인트 등)
-
-import com.example.demo.game.BossService;
 import com.example.demo.game.PlayerCharacterService;
 import com.example.demo.game.RaidGameService;
 import com.example.demo.game.RaidPartyService;
+import com.example.demo.user.UserAccountRepository;
 import com.example.demo.websocket.ChatHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,13 +19,16 @@ public class webSocketConfig implements WebSocketConfigurer {
     private final RaidGameService raidGameService;
     private final PlayerCharacterService playerCharacterService;
     private final RaidPartyService raidPartyService;
+    private final UserAccountRepository userAccountRepository;
 
     public webSocketConfig(RaidGameService raidGameService,
                            PlayerCharacterService playerCharacterService,
-                           RaidPartyService raidPartyService) {
+                           RaidPartyService raidPartyService,
+                           UserAccountRepository userAccountRepository) {
         this.raidGameService = raidGameService;
         this.playerCharacterService = playerCharacterService;
         this.raidPartyService = raidPartyService;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Override
@@ -42,7 +42,8 @@ public class webSocketConfig implements WebSocketConfigurer {
         return new ChatHandler(
                 raidGameService,
                 playerCharacterService,
-                raidPartyService
+                raidPartyService,
+                userAccountRepository
         );
     }
 }

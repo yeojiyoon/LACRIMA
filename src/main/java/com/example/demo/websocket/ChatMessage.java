@@ -14,10 +14,21 @@ public class ChatMessage {
     private Integer damage;
     private Integer bossHp;
     private Integer maxHp;
+    private Integer defense;
 
     private String timestamp;
+    private String comment;
+    private Integer turn;
+    private String command;    // ADMIN 메시지용 (ex: START_BATTLE)
 
     private List<PartyMemberView> party;
+
+    private Long targetCharacterId;
+
+    // 🔥 보스 공격 로그용
+    private String targetName;
+    private Integer targetHp;
+    private Integer targetMaxHp;
 
     public ChatMessage() {}
 
@@ -57,6 +68,14 @@ public class ChatMessage {
 
     public void setSender(String sender) {
         this.sender = sender;
+    }
+
+    public Long getTargetCharacterId() {
+        return targetCharacterId;
+    }
+
+    public void setTargetCharacterId(Long targetCharacterId) {
+        this.targetCharacterId = targetCharacterId;
     }
 
     public String getMessage() {
@@ -99,6 +118,61 @@ public class ChatMessage {
         this.timestamp = timestamp;
     }
 
+    public Integer getDefense() {
+        return defense;
+    }
+
+    public void setDefense(Integer defense) {
+        this.defense = defense;
+    }
+
+    public List<PartyMemberView> getParty() { return party; }
+    public void setParty(List<PartyMemberView> party) { this.party = party; }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    // 🔥 보스 공격 표시에 쓰일 필드들
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public void setTargetName(String targetName) {
+        this.targetName = targetName;
+    }
+
+    public Integer getTargetHp() {
+        return targetHp;
+    }
+
+    public void setTargetHp(Integer targetHp) {
+        this.targetHp = targetHp;
+    }
+
+    public Integer getTargetMaxHp() {
+        return targetMaxHp;
+    }
+
+    public void setTargetMaxHp(Integer targetMaxHp) {
+        this.targetMaxHp = targetMaxHp;
+    }
+
+    public Integer getTurn() {
+        return turn;
+    }
+
+    public void setTurn(Integer turn) {
+        this.turn = turn;
+    }
+
+    public String getCommand() { return command; }
+    public void setCommand(String command) { this.command = command; }
+
     // ===== toString (디버깅용) =====
     @Override
     public String toString() {
@@ -113,7 +187,4 @@ public class ChatMessage {
                 ", timestamp='" + timestamp + '\'' +
                 '}';
     }
-
-    public List<PartyMemberView> getParty() { return party; }
-    public void setParty(List<PartyMemberView> party) { this.party = party; }
 }

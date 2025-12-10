@@ -173,6 +173,20 @@ body {
     filter: brightness(1.1);
 }
 
+.chat-message.boss-attack {
+    font-weight: 600;
+}
+
+.chat-message.attack-text {
+    color: #c0392b;    /* 진한 붉은색 */
+    font-weight: 600;  /* 살짝 굵게 */
+}
+
+.chat-message.defend-text {
+    color: #0067a3;
+    font-weight: 600;  /* 살짝 굵게 */
+}
+
 /* 상단 정보바 */
 .top-bar {
     position: absolute;

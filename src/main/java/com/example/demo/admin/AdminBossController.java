@@ -4,6 +4,8 @@ import com.example.demo.auth.AuthService;
 import com.example.demo.auth.UnauthorizedException;
 import com.example.demo.game.BossMonster;
 import com.example.demo.game.BossMonsterRepository;
+import com.example.demo.game.BossSkill;
+import com.example.demo.game.BossSkillRepository;
 import com.example.demo.user.UserAccount;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -16,14 +18,17 @@ public class AdminBossController {
 
     private final AuthService authService;
     private final BossMonsterRepository bossRepo;
+    private final BossSkillRepository skillRepo;
 
     public AdminBossController(AuthService authService,
-                               BossMonsterRepository bossRepo) {
+                               BossMonsterRepository bossRepo,
+                               BossSkillRepository skillRepo) {
         this.authService = authService;
         this.bossRepo = bossRepo;
+        this.skillRepo = skillRepo;
     }
 
-    /** 공통: ADMIN 권한 체크 */
+    /** ADMIN 체크 */
     private void requireAdmin(HttpSession session) {
         UserAccount loginUser = authService.requireLogin(session);
         if (!authService.isAdmin(loginUser)) {
@@ -52,6 +57,10 @@ public class AdminBossController {
 
         model.addAttribute("bossForm", form);
         model.addAttribute("formAction", "/admin/bosses/new");
+
+        // 스킬 목록 추가
+        model.addAttribute("skills", skillRepo.findAll());
+
         return "admin/bosses/form";
     }
 
@@ -68,7 +77,13 @@ public class AdminBossController {
         );
         boss.setCurrentHp(form.getCurrentHp());
 
+        // 스킬 매핑
+        boss.setSkill1(findSkill(form.getSkill1Name()));
+        boss.setSkill2(findSkill(form.getSkill2Name()));
+        boss.setSkill3(findSkill(form.getSkill3Name()));
+
         bossRepo.save(boss);
+
         return "redirect:/admin/bosses";
     }
 
@@ -89,12 +104,21 @@ public class AdminBossController {
         form.setCurrentHp(boss.getCurrentHp());
         form.setDefense(boss.getDefense());
 
+        // 기존 스킬 세팅
+        form.setSkill1Name(boss.getSkill1() != null ? boss.getSkill1().getName() : null);
+        form.setSkill2Name(boss.getSkill2() != null ? boss.getSkill2().getName() : null);
+        form.setSkill3Name(boss.getSkill3() != null ? boss.getSkill3().getName() : null);
+
         model.addAttribute("bossForm", form);
         model.addAttribute("formAction", "/admin/bosses/" + id + "/edit");
+
+        // 스킬 목록
+        model.addAttribute("skills", skillRepo.findAll());
+
         return "admin/bosses/form";
     }
 
-    /** 기존 보스 수정 저장 */
+    /** 기존 보스 저장 */
     @PostMapping("/{id}/edit")
     public String updateBoss(@PathVariable Long id,
                              HttpSession session,
@@ -109,21 +133,28 @@ public class AdminBossController {
         boss.setCurrentHp(form.getCurrentHp());
         boss.setDefense(form.getDefense());
 
+        // 스킬 수정 적용
+        boss.setSkill1(findSkill(form.getSkill1Name()));
+        boss.setSkill2(findSkill(form.getSkill2Name()));
+        boss.setSkill3(findSkill(form.getSkill3Name()));
+
         bossRepo.save(boss);
+
         return "redirect:/admin/bosses";
     }
 
-    /** 보스 삭제 */
+    /** 삭제 */
     @PostMapping("/{id}/delete")
     public String deleteBoss(@PathVariable Long id,
                              HttpSession session) {
         requireAdmin(session);
 
         bossRepo.deleteById(id);
+
         return "redirect:/admin/bosses";
     }
 
-    /** (옵션) 보스 HP 리셋: currentHp = maxHp */
+    /** HP 리셋 */
     @PostMapping("/{id}/reset-hp")
     public String resetBossHp(@PathVariable Long id,
                               HttpSession session) {
@@ -136,5 +167,12 @@ public class AdminBossController {
         bossRepo.save(boss);
 
         return "redirect:/admin/bosses";
+    }
+
+    /** 선택된 스킬이 없으면 null 반환 */
+    private BossSkill findSkill(String name) {
+        if (name == null || name.isBlank()) return null;
+        return skillRepo.findById(name)
+                .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + name));
     }
 }

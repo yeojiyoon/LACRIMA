@@ -45,6 +45,11 @@
         <th>Max HP</th>
         <th>Current HP</th>
         <th>방어력</th>
+        <!-- 🔽 여기부터 스킬 컬럼 추가 -->
+        <th>스킬 1</th>
+        <th>스킬 2</th>
+        <th>스킬 3</th>
+        <!-- 🔼 -->
         <th>액션</th>
     </tr>
     </thead>
@@ -55,6 +60,14 @@
         <td th:text="${b.maxHp}">1000</td>
         <td th:text="${b.currentHp}">800</td>
         <td th:text="${b.defense}">30</td>
+
+        <!-- 스킬 1 이름 (없으면 - 표시) -->
+        <td th:text="${b.skill1 != null ? b.skill1.name : '-'}">파이어 브레스</td>
+        <!-- 스킬 2 -->
+        <td th:text="${b.skill2 != null ? b.skill2.name : '-'}">테일 스매시</td>
+        <!-- 스킬 3 -->
+        <td th:text="${b.skill3 != null ? b.skill3.name : '-'}">광폭화</td>
+
         <td>
             <a th:href="@{|/admin/bosses/${b.id}/edit|}" class="button">수정</a>
 
@@ -73,7 +86,7 @@
         </td>
     </tr>
     <tr th:if="${#lists.isEmpty(bosses)}">
-        <td colspan="6">등록된 보스가 없습니다.</td>
+        <td colspan="9">등록된 보스가 없습니다.</td>
     </tr>
     </tbody>
 </table>

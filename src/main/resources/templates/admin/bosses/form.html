@@ -3,54 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <title>보스 관리</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        form div { margin-bottom: 10px; }
-        label { display: inline-block; width: 120px; }
-        input { padding: 4px; }
-        small { color: #777; }
-        header { margin-bottom: 16px; }
-    </style>
 </head>
 <body>
 
-<header>
-    <h1 th:text="${bossForm.id} == null ? '새 보스 생성' : '보스 수정'">
-        보스 편집
-    </h1>
-    <a th:href="@{/admin/bosses}">← 보스 목록으로</a>
-    <hr/>
-</header>
+<h1 th:text="${#strings.isEmpty(bossForm.id) ? '새 보스 생성' : '보스 수정'}">보스 폼</h1>
 
 <form th:object="${bossForm}"
-      th:action="@{${formAction}}"
+      th:action="${formAction}"
       method="post">
 
+    <!-- ID (수정 시에만 사용, 숨김) -->
+    <input type="hidden" th:field="*{id}"/>
+
+    <!-- 이름 -->
     <div>
-        <label for="name">이름</label>
-        <input id="name" type="text" th:field="*{name}" required>
+        <label for="name">보스 이름</label>
+        <input id="name" type="text" th:field="*{name}" required/>
     </div>
 
+    <!-- 최대 HP -->
     <div>
-        <label for="maxHp">Max HP</label>
-        <input id="maxHp" type="number" th:field="*{maxHp}" min="1" required>
-        <small>MaxHP를 줄이면 CurrentHP가 더 클 경우 자동으로 맞춰집니다.</small>
+        <label for="maxHp">최대 HP</label>
+        <input id="maxHp" type="number" th:field="*{maxHp}" min="1" required/>
     </div>
 
+    <!-- 현재 HP -->
     <div>
-        <label for="currentHp">Current HP</label>
-        <input id="currentHp" type="number" th:field="*{currentHp}" min="0" required>
+        <label for="currentHp">현재 HP</label>
+        <input id="currentHp" type="number" th:field="*{currentHp}" min="0" required/>
     </div>
 
+    <!-- 방어력 -->
     <div>
         <label for="defense">방어력</label>
-        <input id="defense" type="number" th:field="*{defense}" min="0" required>
+        <input id="defense" type="number" th:field="*{defense}" required/>
     </div>
 
-    <button type="submit"
-            th:text="${bossForm.id} == null ? '보스 생성' : '저장'">
-        저장
-    </button>
+    <hr/>
+
+    <!-- 스킬 1 -->
+    <div>
+        <label for="skill1">스킬 1</label>
+        <select id="skill1" th:field="*{skill1Name}">
+            <option value="">-- 스킬 1 없음 --</option>
+            <option th:each="s : ${skills}"
+                    th:value="${s.name}"
+                    th:text="${s.name}"></option>
+        </select>
+    </div>
+
+    <!-- 스킬 2 -->
+    <div>
+        <label for="skill2">스킬 2</label>
+        <select id="skill2" th:field="*{skill2Name}">
+            <option value="">-- 스킬 2 없음 --</option>
+            <option th:each="s : ${skills}"
+                    th:value="${s.name}"
+                    th:text="${s.name}"></option>
+        </select>
+    </div>
+
+    <!-- 스킬 3 -->
+    <div>
+        <label for="skill3">스킬 3</label>
+        <select id="skill3" th:field="*{skill3Name}">
+            <option value="">-- 스킬 3 없음 --</option>
+            <option th:each="s : ${skills}"
+                    th:value="${s.name}"
+                    th:text="${s.name}"></option>
+        </select>
+    </div>
+
+    <div>
+        <button type="submit">저장</button>
+        <a th:href="@{/admin/bosses}">목록으로</a>
+    </div>
 </form>
 
 </body>

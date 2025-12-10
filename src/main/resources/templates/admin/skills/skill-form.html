@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>보스 스킬 관리</title>
+</head>
+<body>
+
+<h1 th:text="${#strings.isEmpty(skill.name) ? '새 스킬 생성' : '스킬 수정'}">스킬 폼</h1>
+
+<form th:object="${skill}"
+      th:action="${formAction}"
+      method="post">
+
+    <!-- 스킬 이름 (PK) -->
+    <div>
+        <label for="name">스킬 이름 (PK)</label>
+        <input id="name"
+               type="text"
+               th:field="*{name}"
+               th:readonly="${!#strings.isEmpty(skill.name)}"
+               required/>
+        <small>※ 생성 후에는 이름 변경을 권장하지 않습니다.</small>
+    </div>
+
+    <!-- 스킬 설명 -->
+    <div>
+        <label for="description">스킬 설명</label>
+        <textarea id="description"
+                  th:field="*{description}"
+                  rows="3"></textarea>
+    </div>
+
+    <!-- 스킬 효과 텍스트 -->
+    <div>
+        <label for="effectText">스킬 효과 텍스트</label>
+        <textarea id="effectText"
+                  th:field="*{effectText}"
+                  rows="4"
+                  placeholder="예) 파티 전체에게 강력한 화염 피해를 입힌다."></textarea>
+    </div>
+
+    <!-- 사용 시 출력 텍스트 -->
+    <div>
+        <label for="useText">사용 시 출력 텍스트</label>
+        <textarea id="useText"
+                  th:field="*{useText}"
+                  rows="4"
+                  placeholder="예) 보스가 포효하며 화염을 뿜어낸다!"></textarea>
+    </div>
+
+    <div>
+        <button type="submit">저장</button>
+        <a th:href="@{/templates/admin/skills}">목록으로</a>
+    </div>
+</form>
+
+</body>
+</html>

@@ -8,6 +8,11 @@ public class BossForm {
     private long currentHp;
     private int defense;
 
+    // === 추가된 필드: 스킬 3개 이름 ===
+    private String skill1Name;
+    private String skill2Name;
+    private String skill3Name;
+
     public BossForm() {
     }
 
@@ -25,4 +30,13 @@ public class BossForm {
 
     public int getDefense() { return defense; }
     public void setDefense(int defense) { this.defense = defense; }
+
+    public String getSkill1Name() { return skill1Name; }
+    public void setSkill1Name(String skill1Name) { this.skill1Name = skill1Name; }
+
+    public String getSkill2Name() { return skill2Name; }
+    public void setSkill2Name(String skill2Name) { this.skill2Name = skill2Name; }
+
+    public String getSkill3Name() { return skill3Name; }
+    public void setSkill3Name(String skill3Name) { this.skill3Name = skill3Name; }
 }

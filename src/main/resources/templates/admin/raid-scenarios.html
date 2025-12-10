@@ -215,6 +215,9 @@
         <th>설명</th>
         <th style="width: 160px;">Lobby Room</th>
         <th style="width: 160px;">Raid Room</th>
+        <!-- 🔥 여기 추가 -->
+        <th style="width: 80px;">상태</th>
+        <th style="width: 140px;">관리</th>
       </tr>
       </thead>
       <tbody>
@@ -240,10 +243,48 @@
         <td th:text="${sc.description}">-</td>
         <td class="room-id" th:text="${'lobby-' + sc.id}"></td>
         <td class="room-id" th:text="${'raid-' + sc.id}"></td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-</body>
-</html>
+
+        <!-- 🔥 상태 -->
+        <td>
+    <span class="badge"
+          th:if="${sc.active}"
+          style="background:#022c22; color:#6ee7b7;">
+      ACTIVE
+    </span>
+          <span class="badge"
+                th:if="${!sc.active}"
+                style="background:#3f1d1d; color:#fecaca;">
+      INACTIVE
+    </span>
+        </td>
+
+        <!-- 🔥 관리 버튼 -->
+        <td>
+          <form th:if="${sc.active}"
+                th:action="@{|/admin/raids/${sc.id}/deactivate|}"
+                method="post"
+                style="display:inline;">
+            <button type="submit" class="btn btn-ghost">비활성화</button>
+          </form>
+
+          <form th:if="${!sc.active}"
+                th:action="@{|/admin/raids/${sc.id}/activate|}"
+                method="post"
+                style="display:inline;">
+            <button type="submit" class="btn btn-ghost">활성화</button>
+          </form>
+
+          <!-- 진짜 삭제 버튼도 원하면 아래 추가 (선택) -->
+          <form th:action="@{|/admin/raids/${sc.id}/delete|}"
+                method="post"
+                style="display:inline;"
+                onsubmit="return confirm('정말 삭제할까요?');">
+            <button type="submit" class="btn btn-ghost">삭제</button>
+          </form>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </body>
+      </html>

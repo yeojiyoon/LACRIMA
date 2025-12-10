@@ -7,24 +7,87 @@ const statusEl = document.getElementById("chat-status");
 // ADMIN 전투 시작 버튼 (관리자에게만 렌더됨)
 const adminStartBtn = document.getElementById("admin-start-btn");
 
+// 🔥 엔딩 후 로비로 돌아가기 버튼
+const backBtn = document.getElementById("back-to-lobby-btn");
+
 // 🗡 공격 모드 체크박스 (지금은 안 쓰지만 남겨둠)
 const attackCheckbox = document.getElementById("attack-mode-checkbox");
 const defendSelect = document.getElementById("defend-target-select");
 
 let currentTurn = null;
 let delayedBase = 0;   // 🔥 보스 공격/턴 시작 딜레이 누적용
+let gameOver = false;  // 🔥 엔딩 여부
+
+let isQueuePlaying = false;
+let queueUnlockTimeout = null;
+
+// 엔딩 연출 대사
+const victoryScript = [
+    "용의 거대한 몸이 흔들리며 균열이 간다.",
+    "마지막 비명이 방 안을 울린다.",
+    "적막이 내려앉는다. 전투는 끝났다."
+];
+
+const defeatScript = [
+    "모든 빛이 서서히 사라져간다.",
+    "몸이 움직이지 않는다. 숨소리마저 멀어진다.",
+    "이번 싸움은 여기서 끝났다."
+];
+
+function setSendEnabled(enabled) {
+    if (sendBtn) sendBtn.disabled = !enabled;
+}
+
+function playEndScript(lines, callback) {
+    let acc = 0;
+    lines.forEach(line => {
+        acc += 3000;
+        setTimeout(() => {
+            addMessage(line, "ending-text");
+        }, acc);
+    });
+    if (callback) {
+        setTimeout(callback, acc + 500);
+    }
+}
+
+function enableBackToLobby() {
+    if (backBtn) {
+        backBtn.disabled = false;
+        backBtn.classList.add("active");
+    }
+}
 
 // 파티 영역
 const partyArea = document.querySelector(".party-area");
 
 function queueSystemMessage(text, cssClass) {
     if (!text) return;
-    delayedBase += 3000; // 3초씩 밀기
+
+    // 🔥 큐 시작 → send 버튼 잠금
+    if (!isQueuePlaying) {
+        isQueuePlaying = true;
+        setSendEnabled(false);
+    }
+
+    delayedBase += 1000;
     const delay = delayedBase;
+
     setTimeout(() => {
         addMessage(text, cssClass);
     }, delay);
+
+    // 🔥 마지막 메시지가 출력되면 send 버튼 다시 활성화
+    if (queueUnlockTimeout) {
+        clearTimeout(queueUnlockTimeout);
+    }
+
+    queueUnlockTimeout = setTimeout(() => {
+        isQueuePlaying = false;
+        setSendEnabled(true);   // 버튼 활성화
+    }, delayedBase + 200); // 마지막 메시지 출력 후 약간의 텀
 }
+
 
 function renderParty(party) {
     if (!partyArea) return;
@@ -265,6 +328,36 @@ function connect() {
                 return;
             }
 
+            // 🔥 보스 처치
+            case "BOSS_DEAD": {
+                gameOver = true;
+                delayedBase = 0;
+
+                if (data.message) {
+                    addMessage("[보스 처치] " + data.message, "system");
+                }
+
+                playEndScript(victoryScript, () => {
+                    enableBackToLobby();
+                });
+                return;
+            }
+
+            // 🔥 전투 패배
+            case "GAME_OVER": {
+                gameOver = true;
+                delayedBase = 0;
+
+                if (data.message) {
+                    addMessage("[전투 패배] " + data.message, "system");
+                }
+
+                playEndScript(defeatScript, () => {
+                    enableBackToLobby();
+                });
+                return;
+            }
+
             default:
                 text = "[" + data.type + "] " +
                     (data.sender || "") + " " +
@@ -305,10 +398,17 @@ if (adminStartBtn) {
 }
 
 function sendMessage() {
+    if (isQueuePlaying) return; // 버튼이 disabled라면 여기까지 안 오지만 안전하게 체크
+
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
     const text = chatInput.value.trim();
     const mode = getActionMode();
+
+    // 🔥 엔딩 이후에는 공격·방어 금지 (채팅만 허용)
+    if (gameOver && mode !== "CHAT") {
+        return;
+    }
 
     if (mode === "CHAT" && !text) {
         return;

@@ -257,8 +257,19 @@ public class ChatHandler extends TextWebSocketHandler {
 
             broadcastToRoom(roomId, resultMsg);
 
-            if (result.isTurnEnded()) {
+            // 🔥 이 공격으로 보스가 죽었는지 먼저 체크
+            if (result.isBossDead()) {
+                ChatMessage deadMsg = new ChatMessage();
+                deadMsg.setType(MessageType.BOSS_DEAD);
+                deadMsg.setRoomId(roomId);
+                deadMsg.setSender("SYSTEM");
+                deadMsg.setMessage(username + "가(이) 보스를 처치했습니다!");
 
+                broadcastToRoom(roomId, deadMsg);
+                return; // 보스 공격/턴 시작 메시지 보내지 않음
+            }
+
+            if (result.isTurnEnded()) {
                 var bossHits = result.getBossHits();
                 if (bossHits != null) {
                     for (RaidGameService.BossHit hit : bossHits) {
@@ -282,6 +293,18 @@ public class ChatHandler extends TextWebSocketHandler {
 
                 // 파티 HP 갱신
                 sendPartyUpdate(roomId);
+
+                // 🔥 파티 전멸이면 GAME_OVER만 보내고 종료
+                if (result.isPartyWiped()) {
+                    ChatMessage loseMsg = new ChatMessage();
+                    loseMsg.setType(MessageType.GAME_OVER);
+                    loseMsg.setRoomId(roomId);
+                    loseMsg.setSender("SYSTEM");
+                    loseMsg.setMessage("모든 캐릭터의 HP가 0이 되어 전투에서 패배했습니다.");
+
+                    broadcastToRoom(roomId, loseMsg);
+                    return;
+                }
 
                 // 🔥 여기서 "다음 턴 시작" 알림을 별도로 보냄
                 int nextTurn = raidGameService.getTurn(roomId); // 방금 nextTurn() 한 값
@@ -384,6 +407,18 @@ public class ChatHandler extends TextWebSocketHandler {
             }
 
             sendPartyUpdate(roomId);
+
+            // 🔥 파티 전멸 체크
+            if (result.isPartyWiped()) {
+                ChatMessage loseMsg = new ChatMessage();
+                loseMsg.setType(MessageType.GAME_OVER);
+                loseMsg.setRoomId(roomId);
+                loseMsg.setSender("SYSTEM");
+                loseMsg.setMessage("모든 캐릭터의 HP가 0이 되어 전투에서 패배했습니다.");
+
+                broadcastToRoom(roomId, loseMsg);
+                return;
+            }
 
             int nextTurn = raidGameService.getTurn(roomId);
             ChatMessage turnMsg = new ChatMessage();

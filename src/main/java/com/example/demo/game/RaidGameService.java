@@ -12,6 +12,7 @@ public class RaidGameService {
     private final BossService bossService;
     private final RaidPartyService raidPartyService;
     private final PlayerCharacterService playerCharacterService;
+    private final RaidScenarioRepository raidScenarioRepository;  // 🔥 추가
 
     // roomId -> 현재 턴 번호
     private final Map<String, Integer> roomTurns = new ConcurrentHashMap<>();
@@ -30,10 +31,12 @@ public class RaidGameService {
 
     public RaidGameService(BossService bossService,
                            RaidPartyService raidPartyService,
-                           PlayerCharacterService playerCharacterService) {
+                           PlayerCharacterService playerCharacterService,
+                           RaidScenarioRepository raidScenarioRepository) {   // 🔥 추가
         this.bossService = bossService;
         this.raidPartyService = raidPartyService;
         this.playerCharacterService = playerCharacterService;
+        this.raidScenarioRepository = raidScenarioRepository;
     }
 
     // 레이드 방별 턴 계산
@@ -43,6 +46,59 @@ public class RaidGameService {
 
     private int nextTurn(String roomId) {
         return roomTurns.merge(roomId, 1, Integer::sum);
+    }
+
+    // 🔥 외부에서 읽는 용도
+    public int getTurn(String roomId) {
+        return roomTurns.getOrDefault(roomId, 0);
+    }
+
+    // 🔥 레이드 시작시 action
+    public void startBattle(String roomId) {
+        if (roomId == null || roomId.isBlank()) return;
+
+        // 1) 턴을 1로 설정
+        roomTurns.put(roomId, 1);
+
+        // 2) 방어 관계 초기화
+        clearGuards(roomId);
+
+        // 3) 파티 모든 행동 포인트 회복
+        resetPartyActions(roomId);
+
+        // 4) 필요하면 보스 초기화도 여기서
+        // bossService.initBoss(roomId);
+    }
+
+    // 🔥 시나리오 비활성화 (보스 승리/패배 후)
+    // roomId 형식이 "raid-{id}" 라는 가정하에 id를 파싱해서 비활성화
+    private void deactivateScenario(String roomId) {
+        if (roomId == null || !roomId.startsWith("raid-")) return;
+
+        try {
+            Long scenarioId = Long.parseLong(roomId.substring("raid-".length()));
+            raidScenarioRepository.findById(scenarioId)
+                    .ifPresent(s -> {
+                        s.setActive(false);       // 🔥 RaidScenario에 active 필드 & setter 반드시 추가
+                        raidScenarioRepository.save(s);
+                    });
+        } catch (NumberFormatException e) {
+            // roomId 파싱 실패하면 그냥 무시
+        }
+    }
+
+    // 🔥 파티 전원 사망 체크
+    private boolean isPartyAllDead(String roomId) {
+        var partyMembers = raidPartyService.getPartyMembers(roomId);
+        if (partyMembers == null || partyMembers.isEmpty()) return false;
+
+        for (PartyMemberView view : partyMembers) {
+            PlayerCharacter pc = playerCharacterService.findById(view.getCharacterId());
+            if (pc != null && pc.getCurrentHp() > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -77,6 +133,7 @@ public class RaidGameService {
         } else {
             baseDamage = pc.getAtk();
         }
+
         // 2) 이미 행동한 경우
         if (pc.getActionPoint() <= 0) {
             BossState state = bossService.getBossState(roomId);
@@ -93,9 +150,11 @@ public class RaidGameService {
                     false
             );
         }
+
         // 3) 행동 1 소모 + 저장
         pc.consumeAction();
         playerCharacterService.save(pc);
+
         // 4) 실제 데미지 계산
         finalDamage = calculateDamage(baseDamage);
 
@@ -105,6 +164,26 @@ public class RaidGameService {
         int hp = (state != null) ? state.getHp() : 0;
         int maxHp = (state != null) ? state.getMaxHp() : 0;
 
+        // 🔥 보스 사망 체크
+        if (hp <= 0) {
+            // 레이드 비활성화
+            deactivateScenario(roomId);
+
+            // 보스 턴, 다음 턴 없음
+            return new AttackResult(
+                    resultText,
+                    finalDamage,
+                    hp,
+                    maxHp,
+                    currentTurn,
+                    true,      // 턴은 사실상 끝
+                    null,      // bossHits 없음
+                    true,      // bossDead
+                    false      // partyWiped
+            );
+        }
+
+        // 🔥 보스 살아 있으면 평소처럼 턴 종료 여부 체크
         return ifEnded(roomId, resultText, 1, finalDamage, hp, maxHp);
     }
 
@@ -175,10 +254,9 @@ public class RaidGameService {
                                 int hp,
                                 int maxHp) {
         boolean allDone = areAllActionsConsumed(roomId);
-        int currentTurn = getCurrentTurn(roomId);  // 🔥 이 턴이 지금 플레이 중인 턴
+        int currentTurn = getCurrentTurn(roomId);  // 지금 플레이 중인 턴
 
         if (!allDone) {
-            // 아직 턴 안 끝났으면, 그냥 현재 턴 번호로 반환
             return new AttackResult(
                     resultText,
                     finalDamage,
@@ -186,35 +264,41 @@ public class RaidGameService {
                     maxHp,
                     currentTurn,
                     false,
-                    null
+                    null,
+                    false,
+                    false
             );
         } else {
-            // 🔥 보스 턴 실행해서 각 타격 정보 받아오기
+            // 🔥 보스 턴 실행
             java.util.List<BossHit> bossHits = performBossTurn(roomId);
 
-            // 보스 HP 최신값
             BossState state = bossService.getBossState(roomId);
             int newHp = (state != null) ? state.getHp() : hp;
             int newMaxHp = (state != null) ? state.getMaxHp() : maxHp;
 
-            // 행동 포인트 리셋 + 턴 증가
-            resetPartyActions(roomId);
-            int nextTurnNumber = nextTurn(roomId);  // 🔥 이 값은 "다음 턴 번호"지만,
-            // AttackResult에는 굳이 넣지 않는다. (TURN_START에서 별도로 쓸 것)
+            // 🔥 파티 전원 사망 체크
+            boolean partyWiped = isPartyAllDead(roomId);
+            if (partyWiped) {
+                deactivateScenario(roomId);
+            }
 
-            // AttackResult.message 는 "플레이어 행동 로그"만 유지
+            // 행동 포인트 리셋 + 턴 증가 (전멸이어도 숫자만 올라감)
+            resetPartyActions(roomId);
+            int nextTurnNumber = nextTurn(roomId);
+
             return new AttackResult(
                     resultText,
                     finalDamage,
                     newHp,
                     newMaxHp,
-                    currentTurn,  // 🔥 여전히 "이번 턴 번호"
+                    currentTurn,  // 이번 턴 번호
                     true,
-                    bossHits
+                    bossHits,
+                    false,         // bossDead
+                    partyWiped     // partyWiped
             );
         }
     }
-
 
     // --- 데미지 계산 (주사위) ---
     private int calculateDamage(int baseDamage) {
@@ -236,12 +320,11 @@ public class RaidGameService {
                 diceCount = 1; diceSides = 2; // 범위를 벗어나면 가장 약한 조합
         }
 
-        // 각 조합은 "diceCount번 굴린 주사위를 두 번 합산"
         return rollDice(diceCount, diceSides) + rollDice(diceCount, diceSides);
     }
 
     private int calculateDefense(PlayerCharacter defender) {
-        int det = defender.getDet(); // ⬅ 의지 수치(1~5)
+        int det = defender.getDet(); // 의지 수치(1~5)
 
         int diceCount;
         int diceSides;
@@ -256,7 +339,7 @@ public class RaidGameService {
             default -> { diceCount = 1; diceSides = 4; bonus = 0; }
         }
 
-        int rolled = rollDice(diceCount, diceSides); // 이미 있는 함수
+        int rolled = rollDice(diceCount, diceSides);
         return rolled + bonus;
     }
 
@@ -292,7 +375,7 @@ public class RaidGameService {
             return java.util.List.of(); // 대상 없음
         }
 
-        int damagePerPlayer = 10; // 나중에 보스 스킬 데미지/랜덤으로 교체 예정
+        int damagePerPlayer = 10; // TODO: 보스 스킬 데미지/랜덤으로 교체 예정
         Map<Long, Long> guards = getGuardMap(roomId);
 
         java.util.List<BossHit> hits = new java.util.ArrayList<>();
@@ -303,15 +386,14 @@ public class RaidGameService {
             if (target == null) continue;
 
             int incomingDamage = damagePerPlayer;
-            Integer defenseUsed = null;  // 🔥 이번 타격에서 사용된 방어값 (없으면 null)
+            Integer defenseUsed = null;
 
-            // 이 타겟을 방어하는 캐릭터가 있는지 확인
             Long defenderId = guards.get(targetId);
             if (defenderId != null) {
                 PlayerCharacter defender = playerCharacterService.findById(defenderId);
                 if (defender != null) {
                     int defense = calculateDefense(defender);
-                    defenseUsed = defense;  // 🔥 기록
+                    defenseUsed = defense;
                     incomingDamage = Math.max(0, damagePerPlayer - defense);
                 }
             }
@@ -321,18 +403,16 @@ public class RaidGameService {
             target.setCurrentHp(newHp);
             playerCharacterService.save(target);
 
-            // 🔥 이번 타격 정보 기록 (defense 함께)
             hits.add(new BossHit(
                     target.getId(),
                     target.getName(),
-                    incomingDamage,      // 실제 들어간 피해량
-                    newHp,               // 맞고 난 뒤 HP
+                    incomingDamage,
+                    newHp,
                     target.getMaxHp(),
-                    defenseUsed          // 🔥 여기
+                    defenseUsed
             ));
         }
 
-        // 턴 끝났으니 방어 상태 초기화
         clearGuards(roomId);
 
         return hits;
@@ -353,20 +433,20 @@ public class RaidGameService {
         }
     }
 
-    public static class BossHit { //boss 결과 DTO
+    public static class BossHit { // boss 결과 DTO
         private final Long characterId;
         private final String name;
         private final int damage;
         private final int hpAfter;
         private final int maxHp;
-        private final Integer defense;   // 🔥 추가: 사용된 방어값 (없으면 null)
+        private final Integer defense;
 
         public BossHit(Long characterId,
                        String name,
                        int damage,
                        int hpAfter,
                        int maxHp,
-                       Integer defense) {   // 🔥 생성자에도 추가
+                       Integer defense) {
             this.characterId = characterId;
             this.name = name;
             this.damage = damage;
@@ -375,34 +455,11 @@ public class RaidGameService {
             this.defense = defense;
         }
 
-
         public Long getCharacterId() { return characterId; }
         public String getName() { return name; }
         public int getDamage() { return damage; }
         public int getHpAfter() { return hpAfter; }
         public int getMaxHp() { return maxHp; }
-        public Integer getDefense() { return defense; }  // 🔥 getter
-    }
-
-    //레이드 시작시 action
-    public void startBattle(String roomId) {
-        if (roomId == null || roomId.isBlank()) return;
-
-        // 1) 턴을 1로 설정
-        roomTurns.put(roomId, 1);
-
-        // 2) 방어 관계 초기화
-        clearGuards(roomId);
-
-        // 3) 파티 모든 행동 포인트 회복
-        resetPartyActions(roomId);
-
-        // 4) 필요하면 보스 초기화도 여기서
-        // bossService.initBoss(roomId);
-    }
-
-    // RaidGameService 내부에 추가
-    public int getTurn(String roomId) {
-        return roomTurns.getOrDefault(roomId, 0);
+        public Integer getDefense() { return defense; }
     }
 }

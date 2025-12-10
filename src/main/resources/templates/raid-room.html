@@ -23,6 +23,14 @@
             class="admin-start-btn">
         전투 시작
     </button>
+
+    <!-- 🔥 엔딩 후 활성화될 로비 버튼 -->
+    <button id="back-to-lobby-btn"
+            class="back-to-lobby-btn"
+            th:onclick="|location.href='@{/lobby}'|"
+            disabled>
+        로비로 돌아가기
+    </button>
 </div>
 
 <div class="raid-container">

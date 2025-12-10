@@ -69,6 +69,8 @@ public class AdminRaidScenarioController {
             sc.setBoss(boss);
         }
 
+        sc.setActive(true);
+
         scenarioRepo.save(sc);
         return "redirect:/admin/raids";
     }
@@ -125,6 +127,33 @@ public class AdminRaidScenarioController {
         }
 
         scenarioRepo.save(sc);
+        return "redirect:/admin/raids";
+    }
+
+
+    /** 세트 비활성화 (로비/마이페이지에서 안 보이게) */
+    @PostMapping("/{id}/deactivate")
+    public String deactivate(@PathVariable Long id, HttpSession session) {
+        requireAdmin(session);
+
+        scenarioRepo.findById(id).ifPresent(sc -> {
+            sc.setActive(false);
+            scenarioRepo.save(sc);
+        });
+
+        return "redirect:/admin/raids";
+    }
+
+    /** 세트 다시 활성화 (테스트용 등) */
+    @PostMapping("/{id}/activate")
+    public String activate(@PathVariable Long id, HttpSession session) {
+        requireAdmin(session);
+
+        scenarioRepo.findById(id).ifPresent(sc -> {
+            sc.setActive(true);
+            scenarioRepo.save(sc);
+        });
+
         return "redirect:/admin/raids";
     }
 

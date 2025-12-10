@@ -45,7 +45,7 @@ public class PageController {
         model.addAttribute("role", user.getRole());
 
         // admin이 만든 레이드 세트 전체
-        List<RaidScenario> scenarios = raidScenarioRepository.findAll();
+        List<RaidScenario> scenarios = raidScenarioRepository.findByActiveTrue();
         model.addAttribute("scenarios", scenarios);
 
         return "lobby";

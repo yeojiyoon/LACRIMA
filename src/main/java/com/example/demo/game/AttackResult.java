@@ -15,17 +15,21 @@ public class AttackResult {
     // 🔥 보스가 각 파티원에게 가한 타격 정보 (보스 턴이 아닐 땐 null)
     private final List<RaidGameService.BossHit> bossHits;
 
-    // ✅ 예전처럼 쓰던 6개짜리 생성자 (bossHits = null)
+    // 🔥 엔딩 판정용
+    private final boolean bossDead;    // 이 행동으로 보스가 죽었는지
+    private final boolean partyWiped;  // 보스 턴 후 파티 전원 사망인지
+
+    // ✅ 예전처럼 쓰던 6개짜리 생성자 (bossHits = null, 엔딩 플래그 false)
     public AttackResult(String message,
                         int damage,
                         int bossHp,
                         int maxHp,
                         int turn,
                         boolean turnEnded) {
-        this(message, damage, bossHp, maxHp, turn, turnEnded, null);
+        this(message, damage, bossHp, maxHp, turn, turnEnded, null, false, false);
     }
 
-    // ✅ 새로 추가된 7개짜리 생성자
+    // ✅ 기존 7개짜리 생성자 (bossHits만 있는 버전)
     public AttackResult(String message,
                         int damage,
                         int bossHp,
@@ -33,6 +37,19 @@ public class AttackResult {
                         int turn,
                         boolean turnEnded,
                         List<RaidGameService.BossHit> bossHits) {
+        this(message, damage, bossHp, maxHp, turn, turnEnded, bossHits, false, false);
+    }
+
+    // ✅ 새로 추가된 9개짜리 생성자
+    public AttackResult(String message,
+                        int damage,
+                        int bossHp,
+                        int maxHp,
+                        int turn,
+                        boolean turnEnded,
+                        List<RaidGameService.BossHit> bossHits,
+                        boolean bossDead,
+                        boolean partyWiped) {
         this.message = message;
         this.damage = damage;
         this.bossHp = bossHp;
@@ -40,6 +57,8 @@ public class AttackResult {
         this.turn = turn;
         this.turnEnded = turnEnded;
         this.bossHits = bossHits;
+        this.bossDead = bossDead;
+        this.partyWiped = partyWiped;
     }
 
     public String getMessage() { return message; }
@@ -52,4 +71,7 @@ public class AttackResult {
     public List<RaidGameService.BossHit> getBossHits() {
         return bossHits;
     }
+
+    public boolean isBossDead() { return bossDead; }
+    public boolean isPartyWiped() { return partyWiped; }
 }

@@ -105,6 +105,7 @@ public class RaidGameService {
         // 3) 파티 모든 행동 포인트 회복
         resetPartyActions(roomId);
 
+        bossSkillExecutor.resetSkillCooldowns(roomId); //보스 스킬 쿨타임 reset
         // 4) 보스 초기화는 기존처럼 Admin API 등에서 따로 처리
         // bossService.initBoss(roomId);
     }

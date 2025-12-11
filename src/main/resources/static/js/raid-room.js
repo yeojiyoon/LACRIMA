@@ -180,6 +180,7 @@ function updateBossSkillSlot(index, cdNow, cdMax, available, name, desc) {
     const numSpan = slot.querySelector(".cooldown-number");
     const tooltip = slot.querySelector(".boss-skill-tooltip");
 
+    // 🔹 쿨다운 숫자 표시
     if (numSpan) {
         if (cdNow >= 2) {
             numSpan.textContent = cdNow;
@@ -190,17 +191,33 @@ function updateBossSkillSlot(index, cdNow, cdMax, available, name, desc) {
         }
     }
 
+    // 🔹 ready 상태 표시
     if (available || cdNow === 1) {
         slot.classList.add("ready");
     } else {
         slot.classList.remove("ready");
     }
 
+    // 🔹 툴팁 텍스트 (이 부분이 중요!)
     if (tooltip) {
-        tooltip.querySelector("strong").textContent = name || "";
-        tooltip.querySelector("div").textContent = desc || "";
+        const nameEl =
+            tooltip.querySelector(".boss-skill-name") ||
+            tooltip.querySelector("strong");
+
+        const descEl =
+            tooltip.querySelector(".boss-skill-desc") ||
+            tooltip.querySelector("p") ||
+            tooltip.querySelector("div");
+
+        if (nameEl) {
+            nameEl.textContent = name || "";
+        }
+        if (descEl) {
+            descEl.textContent = desc || "";
+        }
     }
 }
+
 
 function renderParty(party) {
     if (!partyArea) return;
@@ -215,10 +232,29 @@ function renderParty(party) {
         const row = document.createElement("div");
         row.className = "character-row";
 
+        // 🔹 이름 + AP 한 줄
         const nameDiv = document.createElement("div");
         nameDiv.className = "character-name";
-        nameDiv.textContent = member.name;
 
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = member.name;
+
+        const apSpan = document.createElement("span");
+        apSpan.className = "character-ap";
+
+        // 서버에서 내려주는 필드 이름에 따라 우선순위로 픽
+        const apValue =
+            member.ap ??
+            member.actionPoint ??
+            member.apNow ??
+            0;
+
+        apSpan.textContent = `AP ${apValue}`;
+
+        nameDiv.appendChild(nameSpan);
+        nameDiv.appendChild(apSpan);
+
+        // 🔹 HP 바
         const hpWrapper = document.createElement("div");
         hpWrapper.className = "char-hp-wrapper";
 
@@ -240,6 +276,7 @@ function renderParty(party) {
     });
 }
 
+
 function updateBossHp(current, max) {
     const bar = document.getElementById("boss-hp-bar");
     const text = document.getElementById("boss-hp-text");
@@ -248,6 +285,17 @@ function updateBossHp(current, max) {
     const ratio = Math.max(0, Math.min(100, (current / max) * 100));
     bar.style.width = ratio + "%";
     text.textContent = `HP ${current} / ${max} (${Math.round(ratio)}%)`;
+}
+
+function updateBossAp(current, max) {
+    const text = document.getElementById("boss-ap-text");
+    if (!text) return;
+
+    if (max != null && !Number.isNaN(max)) {
+        text.textContent = `AP ${current} / ${max}`;
+    } else {
+        text.textContent = `AP ${current}`;
+    }
 }
 
 // ================== 액션 모드 / 라디오 ==================
@@ -391,7 +439,7 @@ function connect() {
 
             case "PARTY_UPDATE": {
                 // 🔥 먼저 직전 턴의 보스 공격 묶음을 출력
-                flushBossAttackBox();
+                flushBossAttackBox(); //얘 ㄴㅁ 핫픽스다....
 
                 console.log("PARTY_UPDATE 수신:", data.party);
                 if (Array.isArray(data.party)) {

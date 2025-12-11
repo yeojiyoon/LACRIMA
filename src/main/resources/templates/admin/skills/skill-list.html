@@ -36,7 +36,9 @@
 <table>
     <thead>
     <tr>
-        <th>이름(PK)</th>
+        <th>코드 이름(PK)</th>
+        <th>표시용 이름</th>
+        <th>최대 쿨타임</th>
         <th>설명</th>
         <th>효과 텍스트</th>
         <th>사용 시 텍스트</th>
@@ -45,7 +47,9 @@
     </thead>
     <tbody>
     <tr th:each="s : ${skills}">
-        <td th:text="${s.name}">Fire Breath</td>
+        <td th:text="${s.name}">highattack</td>
+        <td th:text="${s.displayName}">강공</td>
+        <td th:text="${s.maxCooldown}">2</td>
         <td th:text="${s.description}">설명</td>
         <td th:text="${s.effectText}">효과 설명</td>
         <td th:text="${s.useText}">사용 시 출력</td>
@@ -61,7 +65,7 @@
         </td>
     </tr>
     <tr th:if="${#lists.isEmpty(skills)}">
-        <td colspan="5">등록된 스킬이 없습니다.</td>
+        <td colspan="7">등록된 스킬이 없습니다.</td>
     </tr>
     </tbody>
 </table>

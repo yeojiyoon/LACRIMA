@@ -91,12 +91,13 @@ public class BossSkillExecutor {
 
     /** 스킬 코드에 따라 "몇 턴마다" 사용 가능한지 정의 */
     private int resolveMaxCd(BossSkill skill) {
-        String code = codeOf(skill);
-        return switch (code) {
-            case "highattack", "강공" -> 2; // 2턴마다 (사용 -> 2 -> 1 -> 0=ready)
-            case "breath", "브레스"   -> 1; // 쿨타임 없음 (매턴 사용 가능)
-            default                  -> 1; // 기본: 쿨타임 없음
-        };
+        if (skill == null) return 1;
+
+        int cd = skill.getMaxCooldown();  // ★ DB에서 가져온 필드
+        if (cd <= 0) {
+            return 1;                     // 0 이하로 들어오면 방어적으로 1로
+        }
+        return cd;
     }
 
     private SkillState getOrCreateState(String roomId, BossSkill skill) {
@@ -105,7 +106,7 @@ public class BossSkillExecutor {
         return map.computeIfAbsent(code, c -> {
             SkillState st = new SkillState();
             st.maxCd = resolveMaxCd(skill);
-            st.remaining = 0;     // 처음엔 바로 사용 가능
+            st.remaining = st.maxCd;
             st.available = true;  // == remaining == 0
             return st;
         });
@@ -297,5 +298,9 @@ public class BossSkillExecutor {
             sum += random.nextInt(5) + 1; // 1~5
         }
         return sum;
+    }
+
+    public void resetSkillCooldowns(String roomId) {
+        roomSkillStates.remove(roomId); // 방 전체 스킬 쿨 초기화
     }
 }

@@ -244,6 +244,8 @@ public class ChatHandler extends TextWebSocketHandler {
 
             AttackResult result = raidGameService.handleAttack(roomId, username, pc);
 
+            sendPartyUpdate(roomId);
+
             // 1) 플레이어 공격 결과 먼저 전송
             ChatMessage resultMsg = new ChatMessage();
             resultMsg.setType(MessageType.ATTACK_RESULT);
@@ -417,6 +419,8 @@ public class ChatHandler extends TextWebSocketHandler {
 
         AttackResult result =
                 raidGameService.handleDefend(roomId, defender, targetCharId, msg.getComment());
+
+        sendPartyUpdate(roomId);
 
         // 1) 방어 결과 먼저 전송
         ChatMessage resultMsg = new ChatMessage();

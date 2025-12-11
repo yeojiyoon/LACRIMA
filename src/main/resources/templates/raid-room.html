@@ -42,8 +42,16 @@
             <div class="boss-header">
                 <div class="boss-main-info">
                     <div class="section-title">Boss</div>
-                    <div class="boss-name" id="boss-name"
-                         th:text="${bossName}">Dark Dragon</div>
+
+                    <div class="boss-name-row">
+                        <div class="boss-name" id="boss-name"
+                             th:text="${bossName}">Dark Dragon</div>
+
+                        <!-- 🔥 보스 AP 표시 -->
+                        <div class="boss-ap" id="boss-ap-text">
+                            AP 0
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 🔥 보스 스킬 슬롯 3개 -->
@@ -60,8 +68,8 @@
 
                         <!-- 툴팁: 이름 + 설명 (나중에 서버/JS에서 텍스트 주입 가능) -->
                         <div class="boss-skill-tooltip">
-                            <strong id="boss-skill1-name">브레스</strong>
-                            <p id="boss-skill1-desc">2인 3d5 공격</p>
+                            <strong id="boss-skill1-name">스킬1</strong>
+                            <p id="boss-skill1-desc">스킬1 설명</p>
                         </div>
                     </div>
 
@@ -72,8 +80,8 @@
                             <span class="cooldown-number" id="boss-skill2-cd">1</span>
                         </div>
                         <div class="boss-skill-tooltip">
-                            <strong id="boss-skill2-name">강공</strong>
-                            <p id="boss-skill2-desc">2턴마다 1인에게 40 고정 피해</p>
+                            <strong id="boss-skill2-name">스킬2</strong>
+                            <p id="boss-skill2-desc">스킬2 설명</p>
                         </div>
                     </div>
 
@@ -84,8 +92,8 @@
                             <span class="cooldown-number" id="boss-skill3-cd">3</span>
                         </div>
                         <div class="boss-skill-tooltip">
-                            <strong id="boss-skill3-name">???</strong>
-                            <p id="boss-skill3-desc">아직 정의되지 않은 스킬</p>
+                            <strong id="boss-skill3-name">스킬3</strong>
+                            <p id="boss-skill3-desc">스킬3 설명</p>
                         </div>
                     </div>
                 </div>
@@ -107,7 +115,14 @@
             <div class="section-title">Party</div>
 
             <div th:each="member : ${partyMembers}" class="character-row">
-                <div class="character-name" th:text="${member.name}">Player1</div>
+                <div class="character-name">
+                    <span th:text="${member.name}">Player1</span>
+                    <!-- 🔥 AP 표시 -->
+                    <span class="char-ap-text"
+                          th:text="${'AP ' + member.ap}">
+            AP 0
+        </span>
+                </div>
                 <div class="char-hp-wrapper">
                     <div class="char-hp-fill"
                          th:attr="style=|width: ${member.hpRatio}%|"></div>

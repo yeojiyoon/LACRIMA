@@ -12,15 +12,36 @@
       th:action="${formAction}"
       method="post">
 
-    <!-- 스킬 이름 (PK) -->
+    <!-- 스킬 식별용 이름 (PK) -->
     <div>
-        <label for="name">스킬 이름 (PK)</label>
+        <label for="name">스킬 코드 이름 (PK)</label>
         <input id="name"
                type="text"
                th:field="*{name}"
                th:readonly="${!#strings.isEmpty(skill.name)}"
                required/>
-        <small>※ 생성 후에는 이름 변경을 권장하지 않습니다.</small>
+        <small>※ 코드에서 사용하는 식별자입니다. 생성 후 변경 비권장. (예: highattack, breath)</small>
+    </div>
+
+    <!-- 스킬 표시용 이름 -->
+    <div>
+        <label for="displayName">표시용 이름</label>
+        <input id="displayName"
+               type="text"
+               th:field="*{displayName}"
+               placeholder="예) 강력한 일격, 화염 브레스"
+               required/>
+    </div>
+
+    <!-- 최대 쿨타임 -->
+    <div>
+        <label for="maxCooldown">최대 쿨타임(턴)</label>
+        <input id="maxCooldown"
+               type="number"
+               min="1"
+               th:field="*{maxCooldown}"
+               required/>
+        <small>1이면 매 턴 사용 가능(쿨 없음), 2면 2턴마다, 3이면 3턴마다…</small>
     </div>
 
     <!-- 스킬 설명 -->
@@ -51,7 +72,8 @@
 
     <div>
         <button type="submit">저장</button>
-        <a th:href="@{/templates/admin/skills}">목록으로</a>
+        <!-- 여기 잘못되어 있던 부분 수정 -->
+        <a th:href="@{/admin/skills}">목록으로</a>
     </div>
 </form>
 

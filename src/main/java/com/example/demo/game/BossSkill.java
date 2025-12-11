@@ -6,10 +6,14 @@ import jakarta.persistence.*;
 @Table(name = "boss_skill")
 public class BossSkill {
 
-    // 스킬 이름 = PK
+    // 스킬 식별용 이름 = PK (코드용)
     @Id
     @Column(name = "skill_name", nullable = false, length = 100)
     private String name;
+
+    // 스킬 표시용 이름 (UI에 보여줄 이름)
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
 
     // 스킬 설명
     @Column(nullable = false, length = 1000)
@@ -23,20 +27,34 @@ public class BossSkill {
     @Column(name = "use_text", nullable = false, length = 2000)
     private String useText;
 
+    // 스킬 최대 쿨타임(턴). 1이면 "쿨 없음" 취급
+    @Column(name = "max_cooldown", nullable = false)
+    private int maxCooldown;
+
     public BossSkill() {
     }
 
-    public BossSkill(String name, String description, String effectText, String useText) {
+    public BossSkill(String name,
+                     String displayName,
+                     String description,
+                     String effectText,
+                     String useText,
+                     int maxCooldown) {
         this.name = name;
+        this.displayName = displayName;
         this.description = description;
         this.effectText = effectText;
         this.useText = useText;
+        this.maxCooldown = maxCooldown;
     }
 
-    // getter / setter ...
+    // ==== getter / setter ====
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -46,4 +64,7 @@ public class BossSkill {
 
     public String getUseText() { return useText; }
     public void setUseText(String useText) { this.useText = useText; }
+
+    public int getMaxCooldown() { return maxCooldown; }
+    public void setMaxCooldown(int maxCooldown) { this.maxCooldown = maxCooldown; }
 }

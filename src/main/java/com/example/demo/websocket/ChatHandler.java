@@ -2,7 +2,7 @@ package com.example.demo.websocket;
 
 import com.example.demo.game.*;
 import com.example.demo.user.UserAccountRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 

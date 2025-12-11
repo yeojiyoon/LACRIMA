@@ -1,51 +1,41 @@
-# flyctl launch added from .gitignore
-**\HELP.md
-**\.gradle
-**\build
-!**\gradle\wrapper\gradle-wrapper.jar
-!**\**\src\main\**\build
-!**\**\src\test\**\build
+# === Gradle & Build output ===
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
 
-### STS ###
-**\.apt_generated
-**\.classpath
-**\.factorypath
-**\.project
-**\.settings
-**\.springBeans
-**\.sts4-cache
-**\bin
-!**\**\src\main\**\bin
-!**\**\src\test\**\bin
+# === STS / Eclipse ===
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
 
-### IntelliJ IDEA ###
-**\.idea
-**\*.iws
-**\*.iml
-**\*.ipr
-**\out
-!**\**\src\main\**\out
-!**\**\src\test\**\out
+# === IntelliJ IDEA ===
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
 
-### NetBeans ###
-nbproject\private
-nbbuild
-dist
-nbdist
-.nb-gradle
+# === NetBeans ===
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
 
-### VS Code ###
-**\.vscode
+# === VS Code ===
+.vscode/
 
-# flyctl launch added from .idea\.gitignore
-# Default ignored files
-.idea\shelf
-.idea\workspace.xml
-# Editor-based HTTP Client requests
-.idea\httpRequests
-# Environment-dependent path to Maven home directory
-.idea\mavenHomeManager.xml
-# Datasource local storage ignored files
-.idea\dataSources
-.idea\dataSources.local.xml
+# === OS / 기타 잡파일 ===
+.DS_Store
+*.log
+logs/
+tmp/
+
+# fly 설정은 이미지 안에 굳이 넣을 필요 없음(원하면 지워도 됨)
 fly.toml

@@ -223,6 +223,7 @@ function renderParty(party) {
     if (!partyArea) return;
     partyArea.innerHTML = "";
 
+    // 제목
     const title = document.createElement("div");
     title.className = "section-title";
     title.textContent = "Party";
@@ -232,49 +233,178 @@ function renderParty(party) {
         const row = document.createElement("div");
         row.className = "character-row";
 
-        // 🔹 이름 + AP 한 줄
-        const nameDiv = document.createElement("div");
-        nameDiv.className = "character-name";
+        const card = document.createElement("div");
+        card.className = "char-card";
+
+        // 🔹 캐릭터 이미지
+        const portrait = document.createElement("div");
+        portrait.className = "char-portrait";
+        // TODO: member.imageUrl 들어오면 여기서 backgroundImage 세팅
+        // if (member.imageUrl) {
+        //     portrait.style.backgroundImage = `url(${member.imageUrl})`;
+        // }
+
+        const info = document.createElement("div");
+        info.className = "char-info";
+
+        // === 1. 이름 + AP ===
+        const header = document.createElement("div");
+        header.className = "char-header";
 
         const nameSpan = document.createElement("span");
+        nameSpan.className = "char-name";
         nameSpan.textContent = member.name;
 
         const apSpan = document.createElement("span");
-        apSpan.className = "character-ap";
-
-        // 서버에서 내려주는 필드 이름에 따라 우선순위로 픽
+        apSpan.className = "char-ap-text";
         const apValue =
             member.ap ??
             member.actionPoint ??
             member.apNow ??
             0;
-
         apSpan.textContent = `AP ${apValue}`;
 
-        nameDiv.appendChild(nameSpan);
-        nameDiv.appendChild(apSpan);
+        header.appendChild(nameSpan);
+        header.appendChild(apSpan);
 
-        // 🔹 HP 바
+        // === 2. 스탯 4개 (ATK / INT / DET / HP) ===
+        const stats = document.createElement("div");
+        stats.className = "char-stats";
+
+        const row1 = document.createElement("div");
+        row1.className = "char-stat-row";
+
+        const atkLabel = document.createElement("span");
+        atkLabel.className = "label";
+        atkLabel.textContent = "ATK";
+        const atkVal = document.createElement("span");
+        atkVal.className = "value";
+        const atkValue =
+            member.atkStat ??
+            member.atk ??
+            member.attack ??
+            "-";
+        atkVal.textContent = atkValue;
+
+        const intLabel = document.createElement("span");
+        intLabel.className = "label";
+        intLabel.textContent = "INT";
+        const intVal = document.createElement("span");
+        intVal.className = "value";
+        const intValue =
+            member.intStat ??
+            member.intelligence ??
+            "-";
+        intVal.textContent = intValue;
+
+        row1.appendChild(atkLabel);
+        row1.appendChild(atkVal);
+        row1.appendChild(intLabel);
+        row1.appendChild(intVal);
+
+        const row2 = document.createElement("div");
+        row2.className = "char-stat-row";
+
+        const detLabel = document.createElement("span");
+        detLabel.className = "label";
+        detLabel.textContent = "DET";
+        const detVal = document.createElement("span");
+        detVal.className = "value";
+        const detValue =
+            member.detStat ??
+            member.det ??
+            "-";
+        detVal.textContent = detValue;
+
+        const hpLabel = document.createElement("span");
+        hpLabel.className = "label";
+        hpLabel.textContent = "HP";
+        const hpVal = document.createElement("span");
+        hpVal.className = "value";
+        const hpStatValue =
+            member.hpStat ??
+            member.hpBase ??
+            member.hp ??
+            "-";
+        hpVal.textContent = hpStatValue;
+
+        row2.appendChild(detLabel);
+        row2.appendChild(detVal);
+        row2.appendChild(hpLabel);
+        row2.appendChild(hpVal);
+
+        stats.appendChild(row1);
+        stats.appendChild(row2);
+
+        // === 3. 스킬 2개 (AP 아래, 스탯 오른쪽 세로) ===
+        const skillCol = document.createElement("div");
+        skillCol.className = "char-skill-col";
+
+        [1, 2].forEach((idx) => {
+            const slot = document.createElement("div");
+            slot.className = "char-skill-slot";
+            slot.dataset.skillIndex = String(idx);
+
+            const icon = document.createElement("div");
+            icon.className = "char-skill-icon" + (idx === 2 ? " skill-2" : "");
+
+            const tooltip = document.createElement("div");
+            tooltip.className = "char-skill-tooltip";
+
+            const strong = document.createElement("strong");
+            strong.textContent = `스킬 ${idx}`;
+
+            const p = document.createElement("p");
+            p.textContent = "아직 DB 미연결";
+
+            tooltip.appendChild(strong);
+            tooltip.appendChild(p);
+            slot.appendChild(icon);
+            slot.appendChild(tooltip);
+
+            skillCol.appendChild(slot);
+        });
+
+        // === 4. AP 아래 한 줄: 왼쪽 stats / 오른쪽 skillCol ===
+        const bodyRow = document.createElement("div");
+        bodyRow.className = "char-body-row";
+        bodyRow.appendChild(stats);
+        bodyRow.appendChild(skillCol);
+
+        // === 5. HP 바 ===
         const hpWrapper = document.createElement("div");
         hpWrapper.className = "char-hp-wrapper";
 
         const hpFill = document.createElement("div");
         hpFill.className = "char-hp-fill";
-        hpFill.style.width = (member.hpRatio ?? 0) + "%";
 
+        const ratio =
+            member.hpRatio ??
+            ((member.hp != null && member.maxHp > 0)
+                ? Math.round((member.hp / member.maxHp) * 100)
+                : 0);
+
+        hpFill.style.width = ratio + "%";
         hpWrapper.appendChild(hpFill);
 
         const hpText = document.createElement("div");
         hpText.className = "char-hp-text";
-        hpText.textContent = member.hp + " / " + member.maxHp;
+        hpText.textContent = `${member.hp} / ${member.maxHp}`;
 
-        row.appendChild(nameDiv);
-        row.appendChild(hpWrapper);
-        row.appendChild(hpText);
+        // === 조립 ===
+        info.appendChild(header);
+        info.appendChild(bodyRow);
+        info.appendChild(hpWrapper);
+        info.appendChild(hpText);
+
+        card.appendChild(portrait);
+        card.appendChild(info);
+        row.appendChild(card);
 
         partyArea.appendChild(row);
     });
 }
+
 
 
 function updateBossHp(current, max) {

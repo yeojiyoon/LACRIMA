@@ -76,46 +76,54 @@ body {
     color: #ccc;
 }
 
-/* 파티 영역 */
+/* ===== 파티 영역 ===== */
 .party-area {
     padding: 16px;
     border-radius: 8px;
     background: #262626;
     flex: 1;
     overflow-y: auto;
-}
 
-.character-row {
+    /* 가로 카드 레이아웃 */
     display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    align-content: flex-start;
 }
 
-.character-name {
-    width: 110px;
-    font-size: 14px;
+/* Party 제목은 첫 줄 전체 사용 */
+.party-area > .section-title {
+    flex-basis: 100%;
+    margin-bottom: 4px;
 }
 
+/* 각 파티원 컨테이너 (flex item) */
+.character-row {
+    flex: 0 0 260px;     /* 카드 폭 고정 느낌 (2~3열) */
+    margin: 0;
+}
+
+/* ===== HP 바 (캐릭터용) ===== */
 .char-hp-wrapper {
-    flex: 1;
+    width: 100%;
     height: 14px;
-    background: #444;
+    background: #3a3a3a;
     border-radius: 7px;
     overflow: hidden;
+    margin-top: 6px;
 }
 
 .char-hp-fill {
     height: 100%;
-    background: linear-gradient(to right, #4caf50, #9ccc65);
-    width: 100%; /* JS로 변경 예정 */
-    transition: width 0.2s ease-out;
+    background: linear-gradient(90deg, #ff4d4d, #ff9f43);
+    transition: width 0.25s ease-out;
 }
 
 .char-hp-text {
     font-size: 11px;
-    color: #bbb;
-    margin-left: 4px;
+    opacity: 0.8;
+    margin-top: 3px;
 }
 
 /* ===== 우측: 채팅창 ===== */
@@ -192,13 +200,13 @@ body {
 }
 
 .chat-message.attack-text {
-    color: #c0392b;    /* 진한 붉은색 */
-    font-weight: 600;  /* 살짝 굵게 */
+    color: #c0392b;
+    font-weight: 600;
 }
 
 .chat-message.defend-text {
     color: #0067a3;
-    font-weight: 600;  /* 살짝 굵게 */
+    font-weight: 600;
 }
 
 .chat-message.msg-attack-me {
@@ -256,7 +264,7 @@ body {
     cursor: pointer;
 }
 
-/* 아이콘 (지금은 그라디언트 박스, 나중에 background-image로 교체해도 됨) */
+/* 아이콘 */
 .boss-skill-icon {
     width: 100%;
     height: 100%;
@@ -265,7 +273,6 @@ body {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 }
 
-/* 스킬별 색 변주도 원하면 이렇게 */
 .boss-skill-icon.skill-2 {
     background: linear-gradient(135deg, #3c8dff, #73e0ff);
 }
@@ -273,7 +280,7 @@ body {
     background: linear-gradient(135deg, #9b3cff, #ff73ff);
 }
 
-/* 쿨타임 오버레이: 검은 막 + 숫자 */
+/* 쿨타임 오버레이 */
 .boss-skill-overlay {
     position: absolute;
     inset: 0;
@@ -289,28 +296,24 @@ body {
     color: #fff;
 }
 
-/* isAvailable == true 이면 .ready 클래스를 slot에 붙여서 가리면 됨 */
 .boss-skill-slot.ready .boss-skill-overlay {
     display: none;
 }
 
-/* 툴팁 */
+/* 보스 스킬 툴팁 */
 .boss-skill-tooltip {
     position: absolute;
     top: 110%;
     left: 50%;
     transform: translateX(-50%);
-
     min-width: 180px;
     max-width: 240px;
     padding: 8px 10px;
     border-radius: 6px;
-
     background: #111;
     color: #f5f5f5;
     font-size: 11px;
     line-height: 1.4;
-
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease-out;
@@ -324,7 +327,6 @@ body {
     font-size: 12px;
 }
 
-/* 툴팁 화살표 */
 .boss-skill-tooltip::after {
     content: "";
     position: absolute;
@@ -336,12 +338,10 @@ body {
     border-color: transparent transparent #111 transparent;
 }
 
-/* 마우스 오버 시 툴팁 표시 */
 .boss-skill-slot:hover .boss-skill-tooltip {
     opacity: 1;
 }
 
-/* 좁은 화면에서 살짝 축소 */
 @media (max-width: 768px) {
     .boss-skill-slot {
         width: 38px;
@@ -349,6 +349,7 @@ body {
     }
 }
 
+/* 시스템 메시지 */
 .chat-message.msg-system {
     position: relative;
     font-size: 0.9rem;
@@ -356,8 +357,6 @@ body {
     opacity: 0.95;
     text-align: center;
     padding: 6px 10px;
-
-    /* 🔥 가운데 진하고 양끝 투명한 그라디언트 배경 */
     background: linear-gradient(
             to right,
             rgba(0, 0, 0, 0) 0%,
@@ -366,33 +365,29 @@ body {
             rgba(0, 0, 0, 0.6) 85%,
             rgba(0, 0, 0, 0) 100%
     );
-
     border-radius: 6px;
 }
 
-/* 턴 헤더: [1턴], [2턴] 같은 줄 */
+/* 턴 헤더 */
 .chat-message.msg-turn {
     margin: 10px 0 6px;
     padding: 4px 10px;
     text-align: center;
     font-size: 0.9rem;
     letter-spacing: 0.08em;
-
     border-top: 1px solid rgba(255, 255, 255, 0.25);
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-
     color: #f5f5f5;
     opacity: 0.9;
 }
 
-/* 턴 헤더에 약간 라벨 느낌 주고 싶을 때 */
 .chat-message.msg-turn::before {
     content: "TURN ";
     opacity: 0.7;
     font-weight: 600;
 }
 
-/* 보스 공격 결과 묶음 박스 */
+/* 보스 공격 묶음 */
 .chat-message.boss-attack-group {
     margin-top: 10px;
     margin-bottom: 6px;
@@ -414,6 +409,8 @@ body {
     margin: 2px 0;
 }
 
+/* ===== 파티 캐릭터 카드 ===== */
+
 .character-name {
     display: flex;
     justify-content: space-between;
@@ -423,4 +420,149 @@ body {
 .character-ap {
     font-size: 0.8rem;
     opacity: 0.8;
+}
+
+.char-card {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #202020;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+    height: auto;
+    min-height: 120px;
+}
+
+.char-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 6px;
+    background: #333;
+    background-size: cover;
+    background-position: center;
+}
+
+.char-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* 이름 + AP */
+.char-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.char-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.char-ap-text {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    opacity: 0.85;
+}
+
+/* 가운데 줄: 스탯 + 스킬 */
+.char-body-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+/* 스탯 */
+.char-stats {
+    flex: 1;
+    font-size: 11px;
+    color: #ddd;
+}
+
+.char-stat-row {
+    display: flex;
+    column-gap: 8px;
+}
+
+.char-stat-row .label {
+    opacity: 0.7;
+    margin-right: 2px;
+}
+
+.char-stat-row .value {
+    min-width: 16px;
+}
+
+/* 스킬 세로 두 칸 */
+.char-skill-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.char-skill-slot {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    cursor: default;
+}
+
+.char-skill-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ff7a3c, #ffcf3c);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.char-skill-icon.skill-2 {
+    background: linear-gradient(135deg, #3c8dff, #73e0ff);
+}
+
+/* 스킬 툴팁 */
+.char-skill-tooltip {
+    position: absolute;
+    top: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 150px;
+    max-width: 220px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #111;
+    color: #f5f5f5;
+    font-size: 11px;
+    line-height: 1.4;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out;
+    z-index: 90;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.char-skill-tooltip strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+}
+
+.char-skill-tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #111 transparent;
+}
+
+.char-skill-slot:hover .char-skill-tooltip {
+    opacity: 1;
 }

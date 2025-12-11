@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>내 정보</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" th:href="@{/css/my-info.css}">
+    <script th:src="@{/js/my-info.js}" defer></script>
+</head>
+<body>
+
+<div class="myinfo-top-bar">
+    <span th:text="'Player: ' + ${username}"></span>
+    <span th:if="${character != null}"
+          th:text="' | Character: ' + ${character.name}"></span>
+
+    <button class="back-lobby-btn"
+            type="button"
+            th:onclick="|location.href='@{/lobby}'|">
+        로비로 돌아가기
+    </button>
+</div>
+
+<div class="myinfo-root">
+
+    <!-- ===== LEFT: 전체 캐릭터 스테이지 ===== -->
+    <section class="char-stage">
+
+        <!-- 🔥 전체 배경: 판타지 풍경 -->
+        <div class="char-bg"></div>
+
+        <!-- 🔥 캐릭터 전용 영역 (PNG) -->
+        <div class="char-portrait" id="char-portrait"></div>
+
+        <!-- 좌상단 이름 + HP + 버튼 -->
+        <div class="char-overlay">
+            <div class="char-name-block">
+                <div class="char-label">OPERATOR</div>
+                <div class="char-name"
+                     th:text="${character != null} ? ${character.name} : 'Unknown'">
+                    소드 앨리스
+                </div>
+            </div>
+
+            <div class="char-hp-block" th:if="${character != null}">
+                <div class="char-hp-row">
+                    <span class="hp-label">HP</span>
+                    <span class="hp-text"
+                          th:text="${character.currentHp} + ' / ' + ${character.maxHp}">
+                    137 / 200
+                </span>
+                </div>
+                <div class="char-hp-bar">
+                    <div class="char-hp-fill"
+                         th:if="${character.maxHp > 0}"
+                         th:attr="style=|width: ${character.currentHp * 100 / character.maxHp}%|">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔥 스킬 패널 토글 버튼 (유일한 버튼) -->
+            <button class="vn-toggle-btn" id="vn-toggle-btn" type="button">
+                <span class="vn-btn-label">SKILL LOADOUT</span>
+                <span class="vn-btn-text">
+                “오늘도, 네 뒤는 내가 지켜줄게.”
+            </span>
+            </button>
+        </div>
+
+        <!-- 비주얼 노벨 말풍선 (캐릭터 이미지 클릭으로 ON/OFF) -->
+        <div class="vn-dialog" id="vn-dialog">
+            <div class="vn-dialog-name"
+                 th:text="${character != null} ? ${character.name} : '???'">
+                소드 앨리스
+            </div>
+            <div class="vn-dialog-text">
+                ……괜찮아. 네가 있는 한, 난 무너지지 않아.
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 오른쪽: 슬라이드 스킬 패널 (오른쪽 절반) ===== -->
+    <aside class="skill-panel" id="skill-panel">
+
+        <header class="skill-panel-header">
+            <div>
+                <div class="skill-panel-label">SKILL INVENTORY</div>
+                <h3>보유 스킬</h3>
+            </div>
+        </header>
+
+        <div class="skill-panel-body">
+            <div class="skill-list">
+
+                <!-- TODO: 나중에 th:each로 교체 -->
+                <article class="skill-row" data-skill-id="1">
+                    <div class="skill-row-icon rarity-3"></div>
+                    <div class="skill-row-main">
+                        <div class="skill-row-top">
+                            <span class="skill-row-name">파열 사격</span>
+                            <span class="skill-row-tag tag-attack">공격</span>
+                        </div>
+                        <div class="skill-row-meta">코스트 2 · 쿨타임 3턴</div>
+                        <p class="skill-row-desc">
+                            보스에게 ATK × 2 피해를 주고 방어 무시 20%를 적용합니다.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="skill-row" data-skill-id="2">
+                    <div class="skill-row-icon rarity-2"></div>
+                    <div class="skill-row-main">
+                        <div class="skill-row-top">
+                            <span class="skill-row-name">철벽 자세</span>
+                            <span class="skill-row-tag tag-defense">방어</span>
+                        </div>
+                        <div class="skill-row-meta">코스트 1 · 쿨타임 2턴</div>
+                        <p class="skill-row-desc">
+                            이번 턴 동안 받는 피해를 40% 감소시키고 DET 판정에 +5를 부여합니다.
+                        </p>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+
+        <!-- 하단: 2칸 프리셋 -->
+        <div class="skill-preset-bar">
+            <div class="preset-slot" data-slot="1">
+                <div class="preset-slot-label">SLOT 1</div>
+                <div class="preset-slot-body preset-empty">
+                    <div class="preset-icon"></div>
+                    <div class="preset-text">스킬을 선택하세요</div>
+                </div>
+            </div>
+
+            <div class="preset-slot" data-slot="2">
+                <div class="preset-slot-label">SLOT 2</div>
+                <div class="preset-slot-body preset-empty">
+                    <div class="preset-icon"></div>
+                    <div class="preset-text">스킬을 선택하세요</div>
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+</div>
+
+</body>
+</html>

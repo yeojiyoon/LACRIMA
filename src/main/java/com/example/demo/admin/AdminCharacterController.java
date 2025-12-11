@@ -4,6 +4,8 @@ import com.example.demo.auth.AuthService;
 import com.example.demo.auth.UnauthorizedException;
 import com.example.demo.game.PlayerCharacter;
 import com.example.demo.game.PlayerCharacterRepository;
+import com.example.demo.game.Skill;
+import com.example.demo.game.SkillRepository;
 import com.example.demo.user.UserAccount;
 import com.example.demo.user.UserAccountRepository;
 import jakarta.servlet.http.HttpSession;
@@ -18,13 +20,16 @@ public class AdminCharacterController {
     private final AuthService authService;
     private final PlayerCharacterRepository charRepo;
     private final UserAccountRepository userRepo;
+    private final SkillRepository skillRepo;  // 🔹 추가
 
     public AdminCharacterController(AuthService authService,
                                     PlayerCharacterRepository charRepo,
-                                    UserAccountRepository userRepo) {
+                                    UserAccountRepository userRepo,
+                                    SkillRepository skillRepo) { // 🔹 생성자에 추가
         this.authService = authService;
         this.charRepo = charRepo;
         this.userRepo = userRepo;
+        this.skillRepo = skillRepo;
     }
 
     /** 공통: ADMIN 권한 체크 */
@@ -59,6 +64,7 @@ public class AdminCharacterController {
 
         model.addAttribute("characterForm", form);
         model.addAttribute("users", userRepo.findAll());
+        model.addAttribute("skills", skillRepo.findAll());   // 🔹 장착 스킬 선택용
         model.addAttribute("formAction", "/admin/chars/new");
         return "admin/chars/form";
     }
@@ -72,7 +78,6 @@ public class AdminCharacterController {
         UserAccount user = userRepo.findById(form.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + form.getUserId()));
 
-        // HP 값에 따른 maxHp는 PlayerCharacter 생성자/메서드에서 처리
         PlayerCharacter pc = new PlayerCharacter(
                 user,
                 form.getName(),
@@ -81,9 +86,37 @@ public class AdminCharacterController {
                 form.getHp(),
                 form.getDet()
         );
-        // currentHp / actionPoint는 필요하면 덮어쓰기
+
         pc.setCurrentHp(form.getCurrentHp());
         pc.setActionPoint(form.getActionPoint());
+
+        pc.setPortraitUrl(form.getPortraitUrl());
+        pc.setAvatarUrl(form.getAvatarUrl());
+        pc.setCatchphrase(form.getCatchphrase());
+        pc.setOneLiner1(form.getOneLiner1());
+        pc.setOneLiner2(form.getOneLiner2());
+        pc.setOneLiner3(form.getOneLiner3());
+
+        if (form.getEquippedSkill1Code() != null && !form.getEquippedSkill1Code().isEmpty()) {
+            Skill s1 = skillRepo.findById(form.getEquippedSkill1Code())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + form.getEquippedSkill1Code()));
+            pc.setEquippedSkill1(s1);
+        }
+        if (form.getEquippedSkill2Code() != null && !form.getEquippedSkill2Code().isEmpty()) {
+            Skill s2 = skillRepo.findById(form.getEquippedSkill2Code())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + form.getEquippedSkill2Code()));
+            pc.setEquippedSkill2(s2);
+        }
+
+        // 🔹 인벤토리 세팅
+        if (form.getInventorySkillCodes() != null) {
+            for (String code : form.getInventorySkillCodes()) {
+                if (code == null || code.isEmpty()) continue;
+                Skill skill = skillRepo.findById(code)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + code));
+                pc.getSkillInventory().add(skill);
+            }
+        }
 
         charRepo.save(pc);
         return "redirect:/admin/chars";
@@ -110,11 +143,35 @@ public class AdminCharacterController {
         form.setCurrentHp(pc.getCurrentHp());
         form.setActionPoint(pc.getActionPoint());
 
+        form.setPortraitUrl(pc.getPortraitUrl());
+        form.setAvatarUrl(pc.getAvatarUrl());
+        form.setCatchphrase(pc.getCatchphrase());
+        form.setOneLiner1(pc.getOneLiner1());
+        form.setOneLiner2(pc.getOneLiner2());
+        form.setOneLiner3(pc.getOneLiner3());
+
+        if (pc.getEquippedSkill1() != null) {
+            form.setEquippedSkill1Code(pc.getEquippedSkill1().getCode());
+        }
+        if (pc.getEquippedSkill2() != null) {
+            form.setEquippedSkill2Code(pc.getEquippedSkill2().getCode());
+        }
+
+        // 🔹 인벤토리: 엔티티 → 코드 리스트
+        form.setInventorySkillCodes(
+                pc.getSkillInventory().stream()
+                        .map(Skill::getCode)
+                        .toList()
+        );
+
         model.addAttribute("characterForm", form);
         model.addAttribute("users", userRepo.findAll());
+        model.addAttribute("skills", skillRepo.findAll());
         model.addAttribute("formAction", "/admin/chars/" + id + "/edit");
         return "admin/chars/form";
     }
+
+
 
     /** 기존 캐릭터 수정 저장 */
     @PostMapping("/{id}/edit")
@@ -133,14 +190,52 @@ public class AdminCharacterController {
         pc.setName(form.getName());
         pc.setAtk(form.getAtk());
         pc.setIntelligence(form.getIntelligence());
-        pc.setHp(form.getHp());  // 여기서 maxHp 재계산 + currentHp 조정
+        pc.setHp(form.getHp());
         pc.setDet(form.getDet());
         pc.setCurrentHp(form.getCurrentHp());
         pc.setActionPoint(form.getActionPoint());
 
+        pc.setPortraitUrl(form.getPortraitUrl());
+        pc.setAvatarUrl(form.getAvatarUrl());
+        pc.setCatchphrase(form.getCatchphrase());
+        pc.setOneLiner1(form.getOneLiner1());
+        pc.setOneLiner2(form.getOneLiner2());
+        pc.setOneLiner3(form.getOneLiner3());
+
+        // 장착 스킬 1
+        if (form.getEquippedSkill1Code() == null || form.getEquippedSkill1Code().isEmpty()) {
+            pc.setEquippedSkill1(null);
+        } else {
+            Skill s1 = skillRepo.findById(form.getEquippedSkill1Code())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + form.getEquippedSkill1Code()));
+            pc.setEquippedSkill1(s1);
+        }
+
+        // 장착 스킬 2
+        if (form.getEquippedSkill2Code() == null || form.getEquippedSkill2Code().isEmpty()) {
+            pc.setEquippedSkill2(null);
+        } else {
+            Skill s2 = skillRepo.findById(form.getEquippedSkill2Code())
+                    .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + form.getEquippedSkill2Code()));
+            pc.setEquippedSkill2(s2);
+        }
+
+        // 🔹 인벤토리 업데이트 (기존 거 싹 비우고 다시 채우기)
+        pc.getSkillInventory().clear();
+        if (form.getInventorySkillCodes() != null) {
+            for (String code : form.getInventorySkillCodes()) {
+                if (code == null || code.isEmpty()) continue;
+                Skill skill = skillRepo.findById(code)
+                        .orElseThrow(() -> new IllegalArgumentException("Skill not found: " + code));
+                pc.getSkillInventory().add(skill);
+            }
+        }
+
         charRepo.save(pc);
         return "redirect:/admin/chars";
     }
+
+
 
     /** 캐릭터 삭제 */
     @PostMapping("/{id}/delete")

@@ -6,7 +6,7 @@
     <style>
         body { font-family: sans-serif; margin: 20px; }
         form div { margin-bottom: 10px; }
-        label { display: inline-block; width: 120px; }
+        label { display: inline-block; width: 120px; vertical-align: top; }
         input, select { padding: 4px; }
         small { color: #777; }
         header { margin-bottom: 16px; }
@@ -25,6 +25,8 @@
 <form th:object="${characterForm}"
       th:action="@{${formAction}}"
       method="post">
+
+    <!-- 기본 정보 -->
 
     <div>
         <label for="userId">소유 유저</label>
@@ -71,6 +73,85 @@
     <div>
         <label for="actionPoint">행동 포인트</label>
         <input id="actionPoint" type="number" th:field="*{actionPoint}" min="0" required>
+    </div>
+
+    <hr/>
+
+    <!-- UI용 정보 -->
+
+    <div>
+        <label for="portraitUrl">반신 이미지 URL</label>
+        <input id="portraitUrl" type="text" th:field="*{portraitUrl}">
+    </div>
+
+    <div>
+        <label for="avatarUrl">두상 이미지 URL</label>
+        <input id="avatarUrl" type="text" th:field="*{avatarUrl}">
+    </div>
+
+    <div>
+        <label for="catchphrase">캐치프레이즈</label>
+        <input id="catchphrase" type="text" th:field="*{catchphrase}">
+    </div>
+
+    <div>
+        <label for="oneLiner1">한마디 1</label>
+        <input id="oneLiner1" type="text" th:field="*{oneLiner1}">
+    </div>
+
+    <div>
+        <label for="oneLiner2">한마디 2</label>
+        <input id="oneLiner2" type="text" th:field="*{oneLiner2}">
+    </div>
+
+    <div>
+        <label for="oneLiner3">한마디 3</label>
+        <input id="oneLiner3" type="text" th:field="*{oneLiner3}">
+    </div>
+
+    <hr/>
+
+    <!-- 장착 스킬 -->
+
+    <div>
+        <label for="equippedSkill1Code">장착 스킬 1</label>
+        <select id="equippedSkill1Code" th:field="*{equippedSkill1Code}">
+            <option value="">(없음)</option>
+            <option th:each="s : ${skills}"
+                    th:value="${s.code}"
+                    th:text="${s.name}">
+            </option>
+        </select>
+    </div>
+
+    <div>
+        <label for="equippedSkill2Code">장착 스킬 2</label>
+        <select id="equippedSkill2Code" th:field="*{equippedSkill2Code}">
+            <option value="">(없음)</option>
+            <option th:each="s : ${skills}"
+                    th:value="${s.code}"
+                    th:text="${s.name}">
+            </option>
+        </select>
+    </div>
+
+    <hr/>
+
+    <!-- 스킬 인벤토리 -->
+
+    <div>
+        <label>스킬 인벤토리</label>
+        <div style="display:inline-block; border:1px solid #ddd; padding:8px; max-height:200px; overflow-y:auto; min-width:300px;">
+            <label th:each="s : ${skills}" style="display:block; margin-bottom:4px;">
+                <input type="checkbox"
+                       th:field="*{inventorySkillCodes}"
+                       th:value="${s.code}">
+                <span th:text="${s.name}">스킬 이름</span>
+                <small th:text="' (' + ${s.tag} + ', 쿨:' + ${s.cooldown} + ')'"></small>
+            </label>
+        </div>
+        <br/>
+        <small>체크된 스킬들이 캐릭터의 인벤토리에 포함됩니다.</small>
     </div>
 
     <button type="submit"

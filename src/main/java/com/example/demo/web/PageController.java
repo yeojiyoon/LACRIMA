@@ -156,6 +156,25 @@ public class PageController {
         return "raid-room";
     }
 
+    // PageController.java
 
+    @GetMapping("/my-info")
+    public String myInfo(HttpSession session, Model model) {
+        UserAccount user = (UserAccount) session.getAttribute("loginUser");
+        if (user == null) {
+            return "redirect:/login";
+        }
 
+        model.addAttribute("username", user.getUsername());
+        model.addAttribute("nickname", user.getNickname());
+        model.addAttribute("role", user.getRole());
+
+        PlayerCharacter character = playerCharacterService.findByUser(user);
+        model.addAttribute("character", character);
+
+        // TODO: 나중에 실제 스킬 리스트 넣기
+        // model.addAttribute("skills", skillService.findByCharacter(character));
+
+        return "my-info";
+    }
 }

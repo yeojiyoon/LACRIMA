@@ -111,25 +111,82 @@
 
 
         <!-- 파티 영역 -->
+        <!-- 파티 영역 -->
         <div class="party-area">
             <div class="section-title">Party</div>
 
+            <!-- 🔥 서버에서 내려주는 partyMembers를 카드로 렌더 -->
             <div th:each="member : ${partyMembers}" class="character-row">
-                <div class="character-name">
-                    <span th:text="${member.name}">Player1</span>
-                    <!-- 🔥 AP 표시 -->
-                    <span class="char-ap-text"
-                          th:text="${'AP ' + member.ap}">
-            AP 0
-        </span>
-                </div>
-                <div class="char-hp-wrapper">
-                    <div class="char-hp-fill"
-                         th:attr="style=|width: ${member.hpRatio}%|"></div>
-                </div>
-                <div class="char-hp-text"
-                     th:text="${member.hp} + ' / ' + ${member.maxHp}">
-                    100 / 100
+                <div class="char-card">
+                    <!-- 캐릭터 이미지 (나중에 이미지 연결) -->
+                    <div class="char-portrait">
+                        <!-- TODO: 이미지 -->
+                    </div>
+
+                    <div class="char-info">
+                        <!-- 이름 + AP -->
+                        <div class="char-header">
+                    <span class="char-name"
+                          th:text="${member.name}">Player1</span>
+
+                            <span class="char-ap-text"
+                                  th:text="${'AP ' + member.ap}">
+                        AP 0
+                    </span>
+                        </div>
+
+                        <!-- 🔥 AP 바로 아래: 왼쪽 스탯 / 오른쪽 스킬1·2 -->
+                        <div class="char-body-row">
+                            <!-- 스탯 4개 -->
+                            <div class="char-stats">
+                                <div class="char-stat-row">
+                                    <span class="label">ATK</span>
+                                    <span class="value"
+                                          th:text="${member.atkStat}">-</span>
+                                    <span class="label">INT</span>
+                                    <span class="value"
+                                          th:text="${member.intStat}">-</span>
+                                </div>
+                                <div class="char-stat-row">
+                                    <span class="label">DET</span>
+                                    <span class="value"
+                                          th:text="${member.detStat}">-</span>
+                                    <span class="label">HP</span>
+                                    <span class="value"
+                                          th:text="${member.hpStat}">-</span>
+                                </div>
+                            </div>
+
+                            <!-- 스킬 2개 (세로) -->
+                            <div class="char-skill-col">
+                                <div class="char-skill-slot" data-skill-index="1">
+                                    <div class="char-skill-icon skill-1"></div>
+                                    <div class="char-skill-tooltip">
+                                        <strong>스킬 1</strong>
+                                        <p>아직 DB 미연결</p>
+                                    </div>
+                                </div>
+
+                                <div class="char-skill-slot" data-skill-index="2">
+                                    <div class="char-skill-icon skill-2"></div>
+                                    <div class="char-skill-tooltip">
+                                        <strong>스킬 2</strong>
+                                        <p>아직 DB 미연결</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HP 게이지 (카드 아래쪽 전체) -->
+                        <div class="char-hp-wrapper">
+                            <div class="char-hp-fill"
+                                 th:attr="style=|width: ${member.hpRatio}%|"></div>
+                        </div>
+                        <div class="char-hp-text"
+                             th:text="${member.hp} + ' / ' + ${member.maxHp}">
+                            100 / 100
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

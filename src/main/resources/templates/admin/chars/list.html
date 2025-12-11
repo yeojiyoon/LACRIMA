@@ -21,6 +21,10 @@
         }
         header { margin-bottom: 16px; }
         nav a { margin-right: 10px; }
+        .avatar-img {
+            max-width: 48px;
+            max-height: 48px;
+        }
     </style>
 </head>
 <body>
@@ -41,6 +45,10 @@
         <th>유저</th>
         <th>닉네임</th>
         <th>캐릭터 이름</th>
+        <th>아바타</th>
+        <th>캐치프레이즈</th>
+        <th>장착 스킬 1</th>
+        <th>장착 스킬 2</th>
         <th>ATK</th>
         <th>INT</th>
         <th>HP 스탯</th>
@@ -57,6 +65,28 @@
         <td th:text="${c.user.username}">admin</td>
         <td th:text="${c.user.nickname}">관리자</td>
         <td th:text="${c.name}">캐릭터</td>
+
+        <!-- 아바타 이미지 -->
+        <td>
+            <img th:if="${c.avatarUrl != null}"
+                 th:src="${c.avatarUrl}"
+                 alt="avatar"
+                 class="avatar-img">
+        </td>
+
+        <!-- 캐치프레이즈 -->
+        <td th:text="${c.catchphrase}">캐치프레이즈</td>
+
+        <!-- 장착 스킬 1 -->
+        <td th:text="${c.equippedSkill1 != null} ? c.equippedSkill1.name : '없음'">
+            장착스킬1
+        </td>
+
+        <!-- 장착 스킬 2 -->
+        <td th:text="${c.equippedSkill2 != null} ? c.equippedSkill2.name : '없음'">
+            장착스킬2
+        </td>
+
         <td th:text="${c.atk}">3</td>
         <td th:text="${c.intelligence}">4</td>
         <td th:text="${c.hp}">1</td>
@@ -64,6 +94,7 @@
         <td th:text="${c.currentHp}">160</td>
         <td th:text="${c.det}">5</td>
         <td th:text="${c.actionPoint}">1</td>
+
         <td>
             <a th:href="@{|/admin/chars/${c.id}/edit|}" class="button">수정</a>
 
@@ -75,8 +106,10 @@
             </form>
         </td>
     </tr>
+
     <tr th:if="${#lists.isEmpty(characters)}">
-        <td colspan="12">등록된 캐릭터가 없습니다.</td>
+        <!-- 컬럼 개수에 맞게 colspan 조정 (16) -->
+        <td colspan="16">등록된 캐릭터가 없습니다.</td>
     </tr>
     </tbody>
 </table>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>스킬 목록</title>
+</head>
+<body>
+
+<h1>스킬 목록</h1>
+
+<!-- 🔙 관리자 홈으로 돌아가기 -->
+<a th:href="@{/admin}">← 관리자 홈</a>
+
+<br/><br/>
+
+<!-- 신규 등록 -->
+<a th:href="@{/admin/user-skills/new}">새 스킬 등록</a>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>코드</th>
+        <th>이름</th>
+        <th>태그</th>
+        <th>쿨타임</th>
+        <th>이미지</th>
+        <th>액션</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="skill : ${skills}">
+        <td th:text="${skill.code}"></td>
+        <td th:text="${skill.name}"></td>
+        <td th:text="${skill.tag}"></td>
+        <td th:text="${skill.cooldown}"></td>
+
+        <td>
+            <img th:if="${skill.imageUrl != null}"
+                 th:src="${skill.imageUrl}"
+                 alt="img"
+                 style="max-width:64px; max-height:64px;">
+        </td>
+
+        <td>
+            <!-- 수정 -->
+            <a th:href="@{/admin/user-skills/{code}/edit(code=${skill.code})}">수정</a>
+
+            <!-- 삭제 -->
+            <form th:action="@{/admin/user-skills/{code}/delete(code=${skill.code})}"
+                  method="post" style="display:inline;">
+                <button type="submit">삭제</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

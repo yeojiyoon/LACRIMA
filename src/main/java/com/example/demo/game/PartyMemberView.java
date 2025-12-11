@@ -7,20 +7,32 @@ public class PartyMemberView {
     private final int hp;
     private final int maxHp;
     private final int hpRatio; // 0~100
-
-    // 🔥 현재 남은 AP
     private final int ap;
+
+    // 🔥 스탯 4개
+    private final int atkStat;
+    private final int intStat;
+    private final int detStat;
+    private final int hpStat;  // (스탯으로서의 HP, pc.getHp())
 
     public PartyMemberView(Long characterId,
                            String name,
                            int hp,
                            int maxHp,
-                           int ap) {
+                           int ap,
+                           int atkStat,
+                           int intStat,
+                           int detStat,
+                           int hpStat) {
         this.characterId = characterId;
         this.name = name;
         this.hp = hp;
         this.maxHp = maxHp;
         this.ap = ap;
+        this.atkStat = atkStat;
+        this.intStat = intStat;
+        this.detStat = detStat;
+        this.hpStat = hpStat;
 
         if (maxHp <= 0) {
             this.hpRatio = 0;
@@ -35,15 +47,24 @@ public class PartyMemberView {
                 pc.getName(),
                 pc.getCurrentHp(),
                 pc.getMaxHp(),
-                pc.getActionPoint()      // 🔥 여기서 AP 집어넣기
+                pc.getActionPoint(),
+                pc.getAtk(),
+                pc.getIntelligence(),
+                pc.getDet(),
+                pc.getHp()          // 스탯형 HP
         );
     }
 
+    // getter들
     public Long getCharacterId() { return characterId; }
     public String getName() { return name; }
     public int getHp() { return hp; }
     public int getMaxHp() { return maxHp; }
     public int getHpRatio() { return hpRatio; }
+    public int getAp() { return ap; }
 
-    public int getAp() { return ap; }  // 🔥 이게 있어야 Thymeleaf, JSON에서 member.ap 사용 가능
+    public int getAtkStat() { return atkStat; }
+    public int getIntStat() { return intStat; }
+    public int getDetStat() { return detStat; }
+    public int getHpStat() { return hpStat; }
 }

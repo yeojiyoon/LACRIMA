@@ -1,21 +1,21 @@
-<!-- src/main/resources/templates/lobby.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-    <link rel="stylesheet" th:href="@{/css/global.css}">
-    <script src="/js/global.js" defer></script>
     <meta charset="UTF-8">
     <title>레이드 로비</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <script src="/js/global.js" defer></script>
+
     <style>
         :root {
             --bg: #020617;
             --bg-card: #020617;
             --bg-elevated: #020617;
-            --border-subtle: #1f2937;
+            --border-subtle: #2e2e2e;
             --accent: #3b82f6;
             --accent-soft: rgba(59,130,246,0.15);
             --text-main: #e5e7eb;
-            --text-sub: #9ca3af;
+            --text-sub: #afafaf;
             --danger: #f97373;
         }
 
@@ -25,88 +25,228 @@
 
         body {
             margin: 0;
-            padding: 24px;
+            padding: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #0f172a 0, #020617 55%, #020617 100%);
+
+            /* 🔥 배경 일러스트 바로 깔기 */
+            background:
+                    radial-gradient(circle at top, rgba(37, 37, 37, 0.75) 0, rgba(21, 21, 21, 0.95) 55%, #202020 100%),
+                    url("https://aimatters.co.kr/wp-content/uploads/2024/09/7-4.c-1024x771.png") center/cover fixed no-repeat;
             color: var(--text-main);
+
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .page {
-            max-width: 1100px;
-            margin: 0 auto;
+        .lobby-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 24px 32px;
         }
 
+        /* 상단 바 – my-info 톤 */
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 16px;
         }
 
         .top-bar-left h1 {
-            font-size: 24px;
             margin: 0 0 4px 0;
+            font-size: 24px;
+            color: #f9fafb;
         }
 
         .top-bar-left p {
             margin: 0;
-            font-size: 14px;
-            color: var(--text-sub);
         }
 
         .top-bar-right {
             display: flex;
-            gap: 8px;
             align-items: center;
+            gap: 10px;
         }
 
-        .pill {
+        .top-pill {
             padding: 4px 10px;
             border-radius: 999px;
-            background: rgba(15,23,42,0.9);
+            background: rgba(43, 43, 43, 0.9);
             border: 1px solid var(--border-subtle);
             font-size: 12px;
             color: var(--text-sub);
         }
 
-        .btn {
+        .top-link {
             border-radius: 999px;
-            border: none;
+            border: 1px solid rgba(186, 186, 186, 0.8);
             padding: 7px 14px;
             font-size: 13px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+            background: rgba(43, 43, 43, 0.85);
+            color: #e5e7eb;
+            text-decoration: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            color: white;
+        .top-link:hover {
+            background: rgb(43, 43, 43);
         }
 
-        .btn-primary:hover {
+        /* 메인 레이아웃 – 좌: NPC / 우: 레이드 패널
+           🔥 왼쪽을 더 넓게, 오른쪽을 약간 줄이기 */
+        .lobby-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 4fr) minmax(0, 3fr);
+            gap: 24px;
+            height: calc(100% - 56px); /* 상단바 제외 */
+        }
+
+        /* ===== LEFT : NPC 스테이지 (카드 없이 풀 화면) ===== */
+
+        .lobby-left {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .npc-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .npc-overlay {
+            position: absolute;
+            top: 48px;
+            left: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 360px;
+            z-index: 2;
+        }
+
+        .npc-label {
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .npc-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .npc-sub {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        /* VN 스타일 토글 버튼 (my-info 버튼 톤 맞춤) */
+        .npc-vn-toggle {
+            margin-top: 6px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(181, 181, 181, 0.5);
+            background: linear-gradient(135deg, rgba(48, 48, 48, 0.9), rgba(44, 44, 44, 0.85));
+            color: #f5f5f5;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 0 0 1px rgba(41, 41, 41, 0.9);
+        }
+
+        .npc-vn-toggle:hover {
             filter: brightness(1.05);
         }
 
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-sub);
-            border: 1px solid var(--border-subtle);
+        .npc-vn-label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.75;
+            margin-bottom: 2px;
         }
 
-        .lobby-layout {
-            display: grid;
-            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-            gap: 20px;
+        .npc-vn-text {
+            font-size: 13px;
+            font-weight: 500;
         }
 
-        .card {
-            background: linear-gradient(145deg, rgba(15,23,42,0.95), #020617);
-            border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 18px 40px rgba(0,0,0,0.6);
-            border: 1px solid rgba(55,65,81,0.9);
+        /* 🔥 플레이어 정보 카드 제거 (나중에 얼굴/이름만 넣을 예정이니 일단 없음) */
+
+        /* NPC 일러스트 – 좀 더 오른쪽 + 크게 */
+        .npc-portrait {
+            position: absolute;
+            bottom: -16px;
+            left: 30%;           /* 18% → 22% : 살짝 더 오른쪽 */
+            width: 540px;        /* 420 → 460 : 조금 키움 */
+            height: 760px;       /* 640 → 680 */
+            background-image: url("https://i.namu.wiki/i/Qmk8o-Q8yCiZqzL5Dea5aeFfSqMuSXAr4OoM1h6DB8F-D0MYfzE26JZUg8MqN42SF3wTW2nC79AtwzdRGK0yzQ.webp");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom center;
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        /* VN 대사 – my-info의 vn-dialog와 같은 스타일, 꼬리 없이 사각형 */
+        .npc-vn-dialog {
+            position: absolute;
+            left: 40px;
+            bottom: 40px;
+            max-width: 420px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(39, 39, 39, 0.96);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.95);
+            font-size: 14px;
+
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+            z-index: 3;
+        }
+
+        .npc-vn-dialog.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .npc-vn-name {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .npc-vn-text-body {
+            font-size: 14px;
+        }
+
+        .npc-vn-dialog::after {
+            content: none; /* 꼬리 제거 */
+        }
+
+        /* ===== RIGHT : 레이드 세트 패널 (조금 좁게) ===== */
+
+        .lobby-right-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 20px 22px;
+            border-radius: 20px;
+            background: radial-gradient(circle at top left,
+            rgba(51, 51, 51, 0.97),
+            rgba(50, 50, 50, 0.92));
+            border: 1px solid rgba(81, 81, 81, 0.9);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
         }
 
         .card-header {
@@ -126,48 +266,20 @@
             color: var(--text-sub);
         }
 
-        /* 왼쪽 카드(내 정보 + 도움말) */
-        .player-info {
-            margin-bottom: 12px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            background: radial-gradient(circle at top left, rgba(59,130,246,0.2), transparent 55%);
-            border: 1px solid rgba(55,65,81,0.9);
-            font-size: 13px;
-        }
-
-        .player-info div {
-            margin-bottom: 4px;
-        }
-
-        .player-info div:last-child {
-            margin-bottom: 0;
-        }
-
-        .guide-list {
-            margin: 0;
-            padding-left: 18px;
-            font-size: 13px;
-            color: var(--text-sub);
-        }
-
-        .guide-list li {
-            margin-bottom: 4px;
-        }
-
-        /* 오른쪽: 세트 리스트 그리드 */
         .scenario-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 14px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .scenario-card {
             position: relative;
             border-radius: 14px;
             padding: 12px 12px 14px 12px;
-            background: radial-gradient(circle at top left, rgba(59,130,246,0.16), rgba(15,23,42,1));
-            border: 1px solid rgba(55,65,81,1);
+            background: radial-gradient(circle at top left, rgba(241, 241, 241, 0.16), rgb(37, 37, 37));
+            border: 1px solid rgb(87, 87, 87);
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -190,9 +302,9 @@
             font-size: 11px;
             color: var(--text-sub);
             border-radius: 999px;
-            border: 1px solid rgba(75,85,99,1);
+            border: 1px solid rgb(106, 106, 106);
             padding: 2px 8px;
-            background: rgba(15,23,42,0.85);
+            background: rgba(43, 43, 43, 0.85);
         }
 
         .boss-line {
@@ -206,26 +318,19 @@
             min-height: 30px;
         }
 
-        .scenario-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: var(--text-sub);
-        }
-
         .room-tags {
             display: flex;
             flex-direction: column;
             gap: 2px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 11px;
         }
 
         .room-tag {
             border-radius: 999px;
             padding: 2px 8px;
-            background: rgba(15,23,42,0.95);
-            border: 1px dashed rgba(55,65,81,1);
+            background: rgba(39, 39, 39, 0.95);
+            border: 1px dashed rgb(74, 74, 74);
         }
 
         .scenario-actions {
@@ -238,6 +343,23 @@
             margin: 0;
         }
 
+        .btn-primary {
+            border-radius: 999px;
+            border: none;
+            padding: 7px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #f4f4f4, #737373);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.05);
+        }
+
         .scenario-empty {
             font-size: 13px;
             color: var(--text-sub);
@@ -245,81 +367,159 @@
             padding: 18px 0;
         }
 
-        hr {
-            border: none;
-            border-top: 1px solid rgba(31,41,55,0.9);
-            margin: 18px 0;
-        }
-
-        @media (max-width: 840px) {
+        @media (max-width: 960px) {
             .lobby-layout {
                 grid-template-columns: minmax(0, 1fr);
+                height: auto;
+                overflow-y: auto;
+            }
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            .lobby-right-card {
+                margin-top: 12px;
             }
         }
+
+        /* ===== 상단 플레이어/캐릭터 칩 (확대 버전) ===== */
+        .top-player-chip {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;                  /* 아이콘과 텍스트 사이 간격 증가 */
+            padding: 6px 14px;          /* 전체 칩을 더 크게 */
+            border-radius: 999px;
+            transform: scale(1.05);     /* 전체적으로 5% 확대 느낌 */
+            transform-origin: left center;
+            cursor: pointer;
+        }
+
+        /* 아바타 확대 */
+        .top-player-avatar {
+            width: 40px;                /* 32 → 40 */
+            height: 40px;
+            border-radius: 999px;
+            background-image: url("https://mblogthumb-phinf.pstatic.net/MjAyMTAxMTBfMTQ0/MDAxNjEwMjg4NjQxNjU3.bwJY8-ior5y76_OX1dEO4TeROuncmNLLMiFPcoRkTZMg.J4V-uIQOSAc6g-YWltJzrlfZrLD491fbR4XSHE0YZTkg.PNG.creamy_soup/%EA%B7%B8%EB%A6%BC1.png?type=w800");
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 0 0 2px rgba(181, 181, 181, 0.9);
+        }
+
+        /* 텍스트 그룹 */
+        .top-player-text-block {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;          /* 라인 간격 살짝 넓히기 */
+        }
+
+        /* 역할(Role) */
+        .top-player-role {
+            font-size: 11px;            /* 10 → 11 */
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #b3b3b3;
+        }
+
+        /* 이름(Name) */
+        .top-player-name {
+            font-size: 15px;            /* 13 → 15 */
+            font-weight: 600;
+            color: #f9fafb;
+        }
+
     </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const npcToggle = document.getElementById("npc-vn-toggle");
+            const npcDialog = document.getElementById("npc-vn-dialog");
+            const npcPortrait = document.getElementById("npc-portrait");
+
+            function toggleDialog() {
+                if (!npcDialog) return;
+                npcDialog.classList.toggle("show");
+            }
+
+            if (npcToggle) {
+                npcToggle.addEventListener("click", toggleDialog);
+            }
+            if (npcPortrait) {
+                npcPortrait.addEventListener("click", toggleDialog);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const chip = document.getElementById("top-player-chip");
+            if (chip) {
+                chip.style.cursor = "pointer";
+                chip.addEventListener("click", () => {
+                    window.location.href = "/my-info";
+                });
+            }
+        });
+
+    </script>
 </head>
 <body>
-<div class="page">
+<div class="lobby-root">
 
     <!-- 상단 유저 정보 바 -->
     <div class="top-bar">
         <div class="top-bar-left">
-            <h1>레이드 로비</h1>
-            <p>
-                <span th:text="'Player: ' + ${username}"></span>
-                <span th:text="' | Nickname: ' + ${nickname}"></span>
-                <span th:text="' | Role: ' + ${role}"></span>
-            </p>
-        </div>
-        <div class="top-bar-right">
-            <div class="pill">
-                첫 레이드 진입 전 · 세트를 선택하세요
+            <!-- 🔥 플레이어/캐릭터 칩 -->
+            <div class="top-player-chip" id="top-player-chip">
+                <div class="top-player-avatar"></div>
+                <div class="top-player-text-block">
+                    <div class="top-player-role">캐치프라이즈</div>
+                    <!-- 지금은 캐릭터 이름 DB가 없으니 닉네임으로 표시 -->
+                    <div class="top-player-name"
+                         th:text="${nickname} != null ? ${nickname} : ${username}">
+                        소드 앨리스
+                    </div>
+                </div>
             </div>
-            <a th:href="@{/my-page}" class="btn btn-ghost">내 정보</a>
         </div>
     </div>
 
     <div class="lobby-layout">
 
-        <!-- 왼쪽: 안내 + 요약 -->
-        <section class="card">
-            <div class="card-header">
-                <div>
-                    <div class="card-title">내 상태</div>
-                    <div class="card-sub">오늘 들어갈 레이드를 고르고, 파티원들과 함께 도전해보세요.</div>
+        <!-- ===== LEFT : NPC 안내 영역 ===== -->
+        <section class="lobby-left">
+            <div class="npc-stage">
+                <div class="npc-overlay">
+                    <div class="npc-label">RAID LOBBY GUIDE</div>
+                    <div class="npc-title">안내인</div>
+                    <div class="npc-sub">
+                        오늘도 새로운 모험가들이 이곳에 모이고 있어요.
+                    </div>
                 </div>
-            </div>
 
-            <div class="player-info">
-                <div th:text="'아이디 : ' + ${username}"></div>
-                <div th:text="'닉네임 : ' + ${nickname}"></div>
-                <div th:text="'권한 : ' + ${role}"></div>
-            </div>
+                <div class="npc-portrait" id="npc-portrait"></div>
 
-            <hr/>
-
-            <div>
-                <div class="card-title" style="font-size: 14px; margin-bottom: 6px;">이용 방법</div>
-                <ul class="guide-list">
-                    <li>오른쪽의 레이드 세트 카드에서 <strong>입장</strong> 버튼을 눌러 입장합니다.</li>
-                    <li>각 세트는 고유한 <code>lobby-번호</code> / <code>raid-번호</code> 룸 ID를 가집니다.</li>
-                    <li>로비 채팅은 마이페이지에서, 실제 전투는 전투방에서 진행됩니다.</li>
-                    <li>관리자는 관리자 페이지에서 레이드 세트와 보스를 추가/수정할 수 있습니다.</li>
-                </ul>
+                <!-- VN 대사 패널 (토글) -->
+                <div class="npc-vn-dialog" id="npc-vn-dialog">
+                    <div class="npc-vn-name">안내인</div>
+                    <div class="npc-vn-text-body">
+                        모험가들은 각자의 운명을 향해 떠나게 됩니다.
+                        <br/>겁먹지 마세요. 당신도 틀림없이 해낼 수 있을 거예요.
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- 오른쪽: 레이드 세트 목록 -->
-        <section class="card">
+        <!-- ===== RIGHT : 레이드 세트 목록 패널 ===== -->
+        <section class="lobby-right-card">
             <div class="card-header">
                 <div>
-                    <div class="card-title">레이드 세트 목록</div>
-                    <div class="card-sub" th:text="${#lists.size(scenarios)} + '개의 세트가 준비되어 있습니다.'">
+                    <div class="card-title">집결하라.</div>
+                    <div class="card-sub"
+                         th:text="${#lists.size(scenarios)} + '개의 레이드 활성화.'">
                         0개의 세트가 준비되어 있습니다.
                     </div>
                 </div>
                 <a th:if="${role == 'ADMIN' or role == 'ROLE_ADMIN'}"
-                   th:href="@{/admin/raids}" class="btn btn-ghost">
+                   th:href="@{/admin/raids}" class="top-link">
                     관리자: 세트 관리
                 </a>
             </div>
@@ -333,7 +533,8 @@
                 <div class="scenario-card" th:each="sc : ${scenarios}">
                     <div class="scenario-header">
                         <div class="scenario-name" th:text="${sc.name}">레이드 이름</div>
-                        <div class="scenario-id-badge" th:text="'#' + ${sc.id}">#1</div>
+                        <div class="scenario-id-badge"
+                             th:text="'#' + ${sc.id}">#1</div>
                     </div>
 
                     <div class="boss-line"
@@ -346,32 +547,18 @@
                         설명
                     </div>
 
-                    <div class="scenario-meta">
-                        <div class="room-tags">
-                            <div class="room-tag"
-                                 th:text="'Lobby Room : lobby-' + ${sc.id}">
-                                Lobby Room : lobby-1
-                            </div>
-                            <div class="room-tag"
-                                 th:text="'Raid Room : raid-' + ${sc.id}">
-                                Raid Room : raid-1
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="scenario-actions">
-                        <!-- 각 세트별로 바로 POST /lobby/select -->
                         <form th:action="@{/lobby/select}" method="post">
                             <input type="hidden" name="scenarioId" th:value="${sc.id}">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn-primary">
                                 입장
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
-
         </section>
+
     </div>
 </div>
 </body>

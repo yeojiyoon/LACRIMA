@@ -26,6 +26,12 @@ public class BossMonster {
     @Column(nullable = false)
     private int defense;
 
+    @Column(nullable = false)
+    private int maxActionPoint = 1;   // 기본 1, 나중에 관리자 페이지에서 수정 가능
+
+    @Column(nullable = false)
+    private int actionPoint = 1;      // 현재 AP
+
     // ==============================
     // 보스가 가진 스킬 3개 (nullable 허용)
     // ==============================
@@ -78,6 +84,42 @@ public class BossMonster {
         if (this.currentHp > maxHp) {
             this.currentHp = maxHp;
         }
+    }
+
+    // 🔥 AP 관련 getter/setter/유틸
+    public int getMaxActionPoint() {
+        return maxActionPoint;
+    }
+
+    public void setMaxActionPoint(int maxActionPoint) {
+        this.maxActionPoint = Math.max(0, maxActionPoint);
+        if (this.actionPoint > this.maxActionPoint) {
+            this.actionPoint = this.maxActionPoint;
+        }
+    }
+
+    public int getActionPoint() {
+        return actionPoint;
+    }
+
+    public void setActionPoint(int actionPoint) {
+        this.actionPoint = Math.max(0, actionPoint);
+    }
+
+    /** 새 턴 시작 시 호출: 보스 AP 풀로 회복 */
+    public void resetActionPoint() {
+        this.actionPoint = this.maxActionPoint;
+    }
+
+    /** 행동 1회 사용 */
+    public void consumeAction() {
+        if (this.actionPoint > 0) {
+            this.actionPoint--;
+        }
+    }
+
+    public boolean hasAction() {
+        return this.actionPoint > 0;
     }
 
     public BossSkill getSkill1() {

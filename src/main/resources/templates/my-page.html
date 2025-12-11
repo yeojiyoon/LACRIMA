@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/global.css}">
     <script src="/js/global.js" defer></script>
 </head>
+
 <body>
 
 <div class="top-bar">
@@ -97,12 +98,21 @@
             <div class="enter-raid-wrapper">
                 <button id="enter-raid-btn"
                         class="enter-raid-btn"
-                        th:attr="data-raid-url=@{|/raid-room/${scenario.id}|}">
+                        th:attr="data-raid-url=@{|/raid-room/${scenario.id}|},
+                 data-raid-name=${scenario.name},
+                 data-raid-desc=${scenario.description}">
                     ⚔ 전투방 입장
                 </button>
+
             </div>
         </div>
     </div>
+</div>
+
+<!-- 레이드 입장 연출 오버레이 -->
+<div id="raid-entry-overlay" class="raid-entry-overlay">
+    <div class="raid-entry-title" id="raid-entry-title"></div>
+    <div class="raid-entry-desc" id="raid-entry-desc"></div>
 </div>
 
 <script th:src="@{/js/my-page.js}"></script>

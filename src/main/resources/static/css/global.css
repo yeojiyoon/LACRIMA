@@ -24,3 +24,59 @@ html, body, * {
         transform: scale(1.8);
     }
 }
+
+/* 폰트 */
+@font-face {
+    font-family: 'HsBombaram30';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.1/HSBombaram3_Thin.woff')
+    format('woff');
+    font-weight: 100;
+    font-display: swap;
+}
+
+/* 입장 연출 오버레이 - 기본은 완전히 숨김 */
+.raid-entry-overlay {
+    position: fixed;
+    inset: 0;
+    background: black;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    font-family: 'HsBombaram30', serif;
+    text-align: center;
+
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;           /* 🔹 기본: 안 보이게 */
+    z-index: 99999;
+    transition: opacity 0.8s ease;
+}
+
+/* 페이드 인 상태 */
+.raid-entry-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;          /* 🔹 show 일 때만 보이게 */
+}
+
+/* 페이드 아웃 상태 */
+.raid-entry-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.raid-entry-title {
+    font-size: 2.8rem;
+    margin-bottom: 0.8rem;
+}
+
+.raid-entry-desc {
+    font-size: 1.2rem;
+    max-width: 700px;
+    line-height: 1.6;
+    opacity: 0.85;
+}

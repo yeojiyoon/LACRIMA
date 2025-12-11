@@ -215,7 +215,7 @@
         <th>설명</th>
         <th style="width: 160px;">Lobby Room</th>
         <th style="width: 160px;">Raid Room</th>
-        <!-- 🔥 여기 추가 -->
+        <th style="width: 70px;">턴</th>
         <th style="width: 80px;">상태</th>
         <th style="width: 140px;">관리</th>
       </tr>
@@ -243,6 +243,8 @@
         <td th:text="${sc.description}">-</td>
         <td class="room-id" th:text="${'lobby-' + sc.id}"></td>
         <td class="room-id" th:text="${'raid-' + sc.id}"></td>
+
+        <td th:text="${sc.currentTurn}">1</td>
 
         <!-- 🔥 상태 -->
         <td>

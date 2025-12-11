@@ -55,6 +55,10 @@ public class AdminBossController {
         form.setCurrentHp(1000);
         form.setDefense(10);
 
+        // 🔥 AP 기본값
+        form.setMaxActionPoint(1);
+        form.setActionPoint(1);
+
         model.addAttribute("bossForm", form);
         model.addAttribute("formAction", "/admin/bosses/new");
 
@@ -76,6 +80,9 @@ public class AdminBossController {
                 form.getDefense()
         );
         boss.setCurrentHp(form.getCurrentHp());
+
+        boss.setMaxActionPoint(form.getMaxActionPoint());
+        boss.setActionPoint(form.getActionPoint());
 
         // 스킬 매핑
         boss.setSkill1(findSkill(form.getSkill1Name()));
@@ -103,6 +110,9 @@ public class AdminBossController {
         form.setMaxHp(boss.getMaxHp());
         form.setCurrentHp(boss.getCurrentHp());
         form.setDefense(boss.getDefense());
+
+        form.setMaxActionPoint(boss.getMaxActionPoint());
+        form.setActionPoint(boss.getActionPoint());
 
         // 기존 스킬 세팅
         form.setSkill1Name(boss.getSkill1() != null ? boss.getSkill1().getName() : null);
@@ -132,6 +142,9 @@ public class AdminBossController {
         boss.setMaxHp(form.getMaxHp());
         boss.setCurrentHp(form.getCurrentHp());
         boss.setDefense(form.getDefense());
+
+        boss.setMaxActionPoint(form.getMaxActionPoint());
+        boss.setActionPoint(form.getActionPoint());
 
         // 스킬 수정 적용
         boss.setSkill1(findSkill(form.getSkill1Name()));

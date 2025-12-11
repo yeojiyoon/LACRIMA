@@ -187,6 +187,24 @@ body {
     font-weight: 600;  /* 살짝 굵게 */
 }
 
+.chat-message.msg-attack-me {
+    color: #ffd27f;
+    font-weight: 600;
+}
+
+.chat-message.msg-attack-other {
+    color: #ffe8b5;
+}
+
+.chat-message.msg-defend-me {
+    color: #7fd4ff;
+    font-weight: 600;
+}
+
+.chat-message.msg-defend-other {
+    color: #b8e6ff;
+}
+
 /* 상단 정보바 */
 .top-bar {
     position: absolute;
@@ -194,4 +212,190 @@ body {
     left: 16px;
     font-size: 13px;
     color: #aaa;
+}
+
+/* ===== 보스 헤더 + 스킬 UI ===== */
+
+.boss-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.boss-main-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.boss-skill-list {
+    display: flex;
+    gap: 8px;
+}
+
+/* 각 스킬 슬롯 */
+.boss-skill-slot {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+}
+
+/* 아이콘 (지금은 그라디언트 박스, 나중에 background-image로 교체해도 됨) */
+.boss-skill-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff7a3c, #ffcf3c);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* 스킬별 색 변주도 원하면 이렇게 */
+.boss-skill-icon.skill-2 {
+    background: linear-gradient(135deg, #3c8dff, #73e0ff);
+}
+.boss-skill-icon.skill-3 {
+    background: linear-gradient(135deg, #9b3cff, #ff73ff);
+}
+
+/* 쿨타임 오버레이: 검은 막 + 숫자 */
+.boss-skill-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.75);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* isAvailable == true 이면 .ready 클래스를 slot에 붙여서 가리면 됨 */
+.boss-skill-slot.ready .boss-skill-overlay {
+    display: none;
+}
+
+/* 툴팁 */
+.boss-skill-tooltip {
+    position: absolute;
+    top: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    min-width: 180px;
+    max-width: 240px;
+    padding: 8px 10px;
+    border-radius: 6px;
+
+    background: #111;
+    color: #f5f5f5;
+    font-size: 11px;
+    line-height: 1.4;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.boss-skill-tooltip strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+/* 툴팁 화살표 */
+.boss-skill-tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #111 transparent;
+}
+
+/* 마우스 오버 시 툴팁 표시 */
+.boss-skill-slot:hover .boss-skill-tooltip {
+    opacity: 1;
+}
+
+/* 좁은 화면에서 살짝 축소 */
+@media (max-width: 768px) {
+    .boss-skill-slot {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+.chat-message.msg-system {
+    position: relative;
+    font-size: 0.9rem;
+    color: #FFFFFF;
+    opacity: 0.95;
+    text-align: center;
+    padding: 6px 10px;
+
+    /* 🔥 가운데 진하고 양끝 투명한 그라디언트 배경 */
+    background: linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.6) 15%,
+            rgba(0, 0, 0, 0.85) 50%,
+            rgba(0, 0, 0, 0.6) 85%,
+            rgba(0, 0, 0, 0) 100%
+    );
+
+    border-radius: 6px;
+}
+
+/* 턴 헤더: [1턴], [2턴] 같은 줄 */
+.chat-message.msg-turn {
+    margin: 10px 0 6px;
+    padding: 4px 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+    color: #f5f5f5;
+    opacity: 0.9;
+}
+
+/* 턴 헤더에 약간 라벨 느낌 주고 싶을 때 */
+.chat-message.msg-turn::before {
+    content: "TURN ";
+    opacity: 0.7;
+    font-weight: 600;
+}
+
+/* 보스 공격 결과 묶음 박스 */
+.chat-message.boss-attack-group {
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #2b1a1a;
+    border: 1px solid #b33939;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.boss-attack-group-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.boss-attack-line {
+    margin: 2px 0;
 }

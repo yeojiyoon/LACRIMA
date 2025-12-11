@@ -14,9 +14,13 @@ public class RaidScenario {
     @Column(length = 1000)
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "boss_id")
     private BossMonster boss;
+
+    // 🔥 현재 턴 번호 (1턴부터 시작)
+    @Column(nullable = false)
+    private int currentTurn = 1;
 
     // 🔥 레이드 활성/비활성
     @Column(nullable = false)
@@ -50,5 +54,10 @@ public class RaidScenario {
     @Transient
     public String getRaidRoomId() {
         return "raid-" + id;
+    }
+
+    public int getCurrentTurn() { return currentTurn; }
+    public void setCurrentTurn(int currentTurn) {
+        this.currentTurn = Math.max(1, currentTurn);
     }
 }

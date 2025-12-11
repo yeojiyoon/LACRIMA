@@ -10,16 +10,16 @@ const adminStartBtn = document.getElementById("admin-start-btn");
 // 🔥 엔딩 후 로비로 돌아가기 버튼
 const backBtn = document.getElementById("back-to-lobby-btn");
 
-// 🗡 공격 모드 체크박스 (지금은 안 쓰지만 남겨둠)
-const attackCheckbox = document.getElementById("attack-mode-checkbox");
+// 🗡 공격 모드 라디오 / 방어 대상 셀렉트
 const defendSelect = document.getElementById("defend-target-select");
 
-let currentTurn = null;
-let delayedBase = 0;   // 🔥 보스 공격/턴 시작 딜레이 누적용
-let gameOver = false;  // 🔥 엔딩 여부
+// ===== 전역 상태 =====
+let currentTurn = null;      // 지금 몇 턴인지
+let gameOver = false;        // 엔딩 여부
 
-let isQueuePlaying = false;
-let queueUnlockTimeout = null;
+// 🔥 보스 공격 로그 버퍼 (한 턴 단위로 모으기)
+let bossAttackBuffer = [];
+let bossAttackTurn = null;
 
 // 엔딩 연출 대사
 const victoryScript = [
@@ -34,16 +34,127 @@ const defeatScript = [
     "이번 싸움은 여기서 끝났다."
 ];
 
+// 파티 영역
+const partyArea = document.querySelector(".party-area");
+
+// 템플릿에서 data-* 로 내려준 값
+const username =
+    (chatWindow && chatWindow.dataset.username) ||
+    ("guest" + Math.floor(Math.random() * 1000));
+
+let roomId =
+    (chatWindow && chatWindow.dataset.roomId) ||
+    "raid-1";
+
+let socket = null;
+
+// ================== 공통 렌더링 유틸 ==================
+
+function appendToChat(node) {
+    if (!chatWindow) return;
+    chatWindow.appendChild(node);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+// 시스템 메시지
+function renderSystemMessage(text) {
+    const div = document.createElement("div");
+    div.className = "chat-message msg-system";
+    div.textContent = text;
+    appendToChat(div);
+}
+
+// 턴 메시지
+function renderTurnMessage(turnTextOrNumber) {
+    const div = document.createElement("div");
+    div.className = "chat-message msg-turn";
+
+    if (typeof turnTextOrNumber === "number") {
+        div.textContent = `${turnTextOrNumber}`;
+    } else {
+        div.textContent = turnTextOrNumber;
+    }
+    appendToChat(div);
+}
+
+// 유저 채팅
+function renderChatMessage(sender, text) {
+    const div = document.createElement("div");
+    const isMe = (sender === username);
+
+    div.className = "chat-message msg-chat " + (isMe ? "msg-chat-me" : "msg-chat-other");
+    div.textContent = (isMe ? "나" : (sender || "알 수 없음")) + ": " + text;
+
+    appendToChat(div);
+}
+
+// 일반 텍스트(공격 코멘트, 엔딩 대사 등)
+function renderPlainMessage(text, cssClass) {
+    const div = document.createElement("div");
+    div.className = "chat-message" + (cssClass ? (" " + cssClass) : "");
+    div.textContent = text;
+    appendToChat(div);
+}
+
+// 기존 addMessage는 그냥 wrapper
+function addMessage(text, cssClass) {
+    renderPlainMessage(text, cssClass);
+}
+
+function flushBossAttackBox() {
+    if (!bossAttackBuffer.length) return;
+
+    // 턴 정보 (없으면 "이번 턴" 정도로 처리)
+    const turnLabel = bossAttackTurn != null
+        ? `[TURN ${bossAttackTurn}] `
+        : "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "chat-message boss-attack-group";
+
+    // 상단 제목
+    const header = document.createElement("div");
+    header.className = "boss-attack-group-title";
+    header.textContent = `${turnLabel} RESULT`;
+    wrapper.appendChild(header);
+
+    // 각 라인
+    bossAttackBuffer.forEach(hit => {
+        const lineDiv = document.createElement("div");
+        lineDiv.className = "boss-attack-line";
+
+        let line = `${hit.name}에게 ${hit.dmg} 피해`;
+        if (hit.hp != null && hit.maxHp != null) {
+            line += ` (HP ${hit.hp} / ${hit.maxHp})`;
+        }
+        if (hit.defense != null) {
+            line += `, 방어 ${hit.defense}`;
+        }
+
+        lineDiv.textContent = line;
+        wrapper.appendChild(lineDiv);
+    });
+
+    appendToChat(wrapper);
+
+    // 버퍼 초기화
+    bossAttackBuffer = [];
+    bossAttackTurn = null;
+}
+
+
+// send 버튼 활성/비활성
 function setSendEnabled(enabled) {
     if (sendBtn) sendBtn.disabled = !enabled;
 }
 
+// 엔딩 연출 대사
 function playEndScript(lines, callback) {
     let acc = 0;
     lines.forEach(line => {
         acc += 3000;
         setTimeout(() => {
-            addMessage(line, "ending-text");
+            renderPlainMessage(line, "ending-text");
         }, acc);
     });
     if (callback) {
@@ -58,36 +169,38 @@ function enableBackToLobby() {
     }
 }
 
-// 파티 영역
-const partyArea = document.querySelector(".party-area");
+// ================== UI: 보스 HP / 스킬 / 파티 ==================
 
-function queueSystemMessage(text, cssClass) {
-    if (!text) return;
+function updateBossSkillSlot(index, cdNow, cdMax, available, name, desc) {
+    const slot = document.querySelector(
+        `.boss-skill-slot[data-skill-index="${index}"]`
+    );
+    if (!slot) return;
 
-    // 🔥 큐 시작 → send 버튼 잠금
-    if (!isQueuePlaying) {
-        isQueuePlaying = true;
-        setSendEnabled(false);
+    const numSpan = slot.querySelector(".cooldown-number");
+    const tooltip = slot.querySelector(".boss-skill-tooltip");
+
+    if (numSpan) {
+        if (cdNow >= 2) {
+            numSpan.textContent = cdNow;
+            numSpan.style.display = "block";
+        } else {
+            numSpan.textContent = "";
+            numSpan.style.display = "none";
+        }
     }
 
-    delayedBase += 1000;
-    const delay = delayedBase;
-
-    setTimeout(() => {
-        addMessage(text, cssClass);
-    }, delay);
-
-    // 🔥 마지막 메시지가 출력되면 send 버튼 다시 활성화
-    if (queueUnlockTimeout) {
-        clearTimeout(queueUnlockTimeout);
+    if (available || cdNow === 1) {
+        slot.classList.add("ready");
+    } else {
+        slot.classList.remove("ready");
     }
 
-    queueUnlockTimeout = setTimeout(() => {
-        isQueuePlaying = false;
-        setSendEnabled(true);   // 버튼 활성화
-    }, delayedBase + 200); // 마지막 메시지 출력 후 약간의 텀
+    if (tooltip) {
+        tooltip.querySelector("strong").textContent = name || "";
+        tooltip.querySelector("div").textContent = desc || "";
+    }
 }
-
 
 function renderParty(party) {
     if (!partyArea) return;
@@ -127,30 +240,6 @@ function renderParty(party) {
     });
 }
 
-// 템플릿에서 data-* 로 내려준 값
-const username =
-    (chatWindow && chatWindow.dataset.username) ||
-    ("guest" + Math.floor(Math.random() * 1000));
-
-let roomId =
-    (chatWindow && chatWindow.dataset.roomId) ||
-    "raid-1";
-
-let socket = null;
-
-function addMessage(text, cssClass) {
-    const div = document.createElement("div");
-    if (cssClass) div.className = "chat-message " + cssClass;
-    div.textContent = text;
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-function setStatus(text) {
-    if (statusEl) statusEl.textContent = text;
-}
-
-// 보스 HP 갱신
 function updateBossHp(current, max) {
     const bar = document.getElementById("boss-hp-bar");
     const text = document.getElementById("boss-hp-text");
@@ -161,21 +250,13 @@ function updateBossHp(current, max) {
     text.textContent = `HP ${current} / ${max} (${Math.round(ratio)}%)`;
 }
 
+// ================== 액션 모드 / 라디오 ==================
+
 function getActionMode() {
     const checked = document.querySelector('input[name="action-mode"]:checked');
     return checked ? checked.value : "CHAT";
 }
 
-// 🔥 턴 헤더 찍기
-function ensureTurnHeader(turn) {
-    if (turn == null) return;
-    if (currentTurn === turn) return;
-
-    currentTurn = turn;
-    addMessage(`[${turn}턴]`, "turn-header");
-}
-
-// 라디오 변경 시 DEFEND이면 셀렉트 활성화, 아니면 비활성화
 document.querySelectorAll('input[name="action-mode"]').forEach(radio => {
     radio.addEventListener("change", () => {
         const mode = getActionMode();
@@ -184,6 +265,12 @@ document.querySelectorAll('input[name="action-mode"]').forEach(radio => {
         }
     });
 });
+
+// ================== WebSocket ==================
+
+function setStatus(text) {
+    if (statusEl) statusEl.textContent = text;
+}
 
 function connect() {
     console.log("웹소켓 연결 시도");
@@ -198,7 +285,7 @@ function connect() {
     socket.onopen = () => {
         console.log("onopen");
         setStatus("✅ 서버와 연결되었습니다. (방: " + roomId + ")");
-        addMessage("시스템: " + roomId + " 방에 입장합니다.", "system");
+        renderSystemMessage(roomId + " 방에 입장합니다.");
 
         const joinMsg = {
             type: "JOIN",
@@ -216,83 +303,96 @@ function connect() {
             data = JSON.parse(event.data);
         } catch (e) {
             console.error("JSON 파싱 실패:", event.data);
-            addMessage(event.data, "other");
+            renderPlainMessage(event.data, "other");
             return;
         }
 
-        let text = "";
-        let cssClass = "other";
-
         switch (data.type) {
-            case "SYSTEM":
-                text = "시스템: " + (data.message || "");
-                cssClass = "system";
-                break;
-
-            // 🔥 TURN_START: admin이 전투 시작 눌렀을 때
-            case "TURN_START": {
-                const t = data.turn;
-
-                if (t === 1) {
-                    // 🔥 최초 1턴은 바로 출력
-                    currentTurn = t;
-                    addMessage(`[${t}턴]`, "turn-header");
-                    if (data.message) {
-                        addMessage("시스템: " + data.message, "system");
-                    }
-                } else {
-                    // 🔥 그 이후 턴은 보스 공격 다음에 3초 딜레이로 출력
-                    queueSystemMessage(`[${t}턴]`, "turn-header");
-                    if (data.message) {
-                        queueSystemMessage("시스템: " + data.message, "system");
-                    }
-                }
+            case "SYSTEM": {
+                renderSystemMessage(data.message || "");
                 return;
             }
 
-            case "CHAT":
-                if (data.sender === username) {
-                    text = "나: " + (data.message || "");
-                    cssClass = "me";
-                } else {
-                    text = (data.sender || "알 수 없음") + ": " + (data.message || "");
-                    cssClass = "other";
-                }
-                break;
+            // TURN_START: 전투 시작 / 다음 턴 시작
+            case "TURN_START": {
+                // 🔥 먼저 직전 턴의 보스 공격 묶음을 출력
+                flushBossAttackBox();
+
+                const tNum = Number(data.turn);
+                currentTurn = tNum;
+
+                // 🔥 0.3초 정도 여유를 줘서 이전 메시지가 완료된 느낌 만들기
+                setTimeout(() => {
+                    renderTurnMessage(tNum);
+
+                    if (data.message) {
+                        renderSystemMessage(data.message);
+                    }
+
+                    updateBossSkillSlot(1, data.skill1CdNow, data.skill1CdMax, data.skill1Available, data.skill1Name, data.skill1Desc);
+                    updateBossSkillSlot(2, data.skill2CdNow, data.skill2CdMax, data.skill2Available, data.skill2Name, data.skill2Desc);
+                    updateBossSkillSlot(3, data.skill3CdNow, data.skill3CdMax, data.skill3Available, data.skill3Name, data.skill3Desc);
+                }, 1000);
+
+                return;
+            }
+
+
+            case "CHAT": {
+                renderChatMessage(data.sender, data.message || "");
+                return;
+            }
 
             case "ATTACK_RESULT": {
-                // 🔥 이번 턴의 로그 시작이므로 딜레이 초기화
-                delayedBase = 0;
+                const comment = (data.comment || "").trim();
 
-                if (data.comment) {
-                    const who = data.sender === username ? "나(공격)" : (data.sender || "알 수 없음");
-                    addMessage(who + ": " + data.comment, "attack-text");
+                if (comment) {
+                    const isMe = data.sender === username;
+                    const whoLabel = isMe
+                        ? "나(공격)"
+                        : ((data.sender || "알 수 없음") + "(공격)");
+
+                    renderPlainMessage(
+                        `${whoLabel}: ${comment}`,
+                        isMe ? "msg-attack-me" : "msg-attack-other"
+                    );
                 }
 
-                let systemText = "[공격] " + (data.message || "");
+                let systemText = `[공격] ` + (data.message || "");
                 if (data.bossHp != null && data.maxHp != null) {
                     systemText += " (보스 HP: " + data.bossHp + " / " + data.maxHp + ")";
                     updateBossHp(data.bossHp, data.maxHp);
                 }
-                addMessage(systemText, "system"); // 바로 출력
-
+                renderSystemMessage(systemText);
                 return;
             }
+
 
             case "DEFEND_RESULT": {
-                delayedBase = 0;
+                const comment = (data.comment || "").trim();
 
-                if (data.comment) {
-                    const who = data.sender === username ? "나(방어)" : (data.sender || "알 수 없음");
-                    addMessage(who + ": " + data.comment, "defend-text");
+                if (comment) {
+                    const isMe = data.sender === username;
+                    const whoLabel = isMe
+                        ? "나(방어)"
+                        : ((data.sender || "알 수 없음") + "(방어)");
+
+                    renderPlainMessage(
+                        `${whoLabel}: ${comment}`,
+                        isMe ? "msg-defend-me" : "msg-defend-other"
+                    );
                 }
-                let systemText = "[방어] " + (data.message || "");
-                addMessage(systemText, "system");
 
+                let systemText = "[방어] " + (data.message || "");
+                renderSystemMessage(systemText);
                 return;
             }
 
-            case "PARTY_UPDATE":
+
+            case "PARTY_UPDATE": {
+                // 🔥 먼저 직전 턴의 보스 공격 묶음을 출력
+                flushBossAttackBox();
+
                 console.log("PARTY_UPDATE 수신:", data.party);
                 if (Array.isArray(data.party)) {
                     renderParty(data.party);
@@ -309,80 +409,102 @@ function connect() {
                     }
                 }
                 return;
+            }
+
 
             case "BOSS_ATTACK": {
                 const name = data.targetName || "알 수 없는 대상";
                 const dmg = (data.damage != null) ? data.damage : 0;
                 const defense = (data.defense != null) ? data.defense : null;
 
-                let line = `[보스 공격] ${name}에게 ${dmg} 피해`;
-                if (data.targetHp != null && data.targetMaxHp != null) {
-                    line += ` (HP ${data.targetHp} / ${data.targetMaxHp})`;
+                // 턴 번호가 바뀌면 이전 턴 버퍼를 먼저 플러시
+                const t = (data.turn != null) ? Number(data.turn) : null;
+                if (bossAttackTurn != null && t != null && t !== bossAttackTurn) {
+                    flushBossAttackBox();
                 }
-                if (defense !== null) {
-                    line += `, 방어 ${defense}`;
+                if (bossAttackTurn == null && t != null) {
+                    bossAttackTurn = t;
                 }
 
-                // 🔥 3초씩 밀리면서 순차 출력
-                queueSystemMessage(line, "system");
+                // 일단 버퍼에 쌓기만 한다
+                bossAttackBuffer.push({
+                    name,
+                    dmg,
+                    hp: (data.targetHp != null ? data.targetHp : null),
+                    maxHp: (data.targetMaxHp != null ? data.targetMaxHp : null),
+                    defense
+                });
+
+                // 🔥 여기서는 바로 출력하지 않는다!
                 return;
             }
 
-            // 🔥 보스 처치
             case "BOSS_DEAD": {
+                // 🔥 먼저 직전 턴의 보스 공격 묶음을 출력
+                flushBossAttackBox();
+
                 gameOver = true;
-                delayedBase = 0;
 
-                if (data.message) {
-                    addMessage("[보스 처치] " + data.message, "system");
-                }
+                const msg = data.message
+                    ? "[보스 처치] " + data.message
+                    : "[보스 처치] 전투에서 승리했습니다.";
 
-                playEndScript(victoryScript, () => {
-                    enableBackToLobby();
-                });
+                renderSystemMessage(msg);
+
+                setTimeout(() => {
+                    playEndScript(victoryScript, () => {
+                        enableBackToLobby();
+                    });
+                }, 300);
                 return;
             }
 
-            // 🔥 전투 패배
             case "GAME_OVER": {
+                // 🔥 먼저 직전 턴의 보스 공격 묶음을 출력
+                flushBossAttackBox();
+
                 gameOver = true;
-                delayedBase = 0;
 
-                if (data.message) {
-                    addMessage("[전투 패배] " + data.message, "system");
-                }
+                const msg = data.message
+                    ? "[전투 패배] " + data.message
+                    : "[전투 패배] 파티가 전멸했습니다.";
 
-                playEndScript(defeatScript, () => {
-                    enableBackToLobby();
-                });
+                renderSystemMessage(msg);
+
+                setTimeout(() => {
+                    playEndScript(defeatScript, () => {
+                        enableBackToLobby();
+                    });
+                }, 300);
                 return;
             }
 
-            default:
-                text = "[" + data.type + "] " +
+            default: {
+                const text = "[" + data.type + "] " +
                     (data.sender || "") + " " +
                     (data.message || "");
-                cssClass = "other";
+                renderPlainMessage(text, "other");
+                return;
+            }
         }
-
-        addMessage(text, cssClass);
     };
 
     socket.onclose = (event) => {
         console.log("onclose:", event);
         setStatus("❌ 연결이 종료되었습니다. (3초 후 재접속)");
-        addMessage("시스템: 연결이 종료되었습니다.", "system");
+        renderSystemMessage("시스템: 연결이 종료되었습니다.");
         setTimeout(connect, 3000);
     };
 
     socket.onerror = (error) => {
         console.log("onerror:", error);
         setStatus("⚠ 연결 오류가 발생했습니다.");
-        addMessage("시스템: 연결 오류가 발생했습니다.", "system");
+        renderSystemMessage("시스템: 연결 오류가 발생했습니다.");
     };
 }
 
-// 🔥 ADMIN용 전투 시작 버튼 → ADMIN 메시지 전송
+// ================== ADMIN / SEND ==================
+
 if (adminStartBtn) {
     adminStartBtn.addEventListener("click", () => {
         if (!socket || socket.readyState !== WebSocket.OPEN) return;
@@ -398,14 +520,11 @@ if (adminStartBtn) {
 }
 
 function sendMessage() {
-    if (isQueuePlaying) return; // 버튼이 disabled라면 여기까지 안 오지만 안전하게 체크
-
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
     const text = chatInput.value.trim();
     const mode = getActionMode();
 
-    // 🔥 엔딩 이후에는 공격·방어 금지 (채팅만 허용)
     if (gameOver && mode !== "CHAT") {
         return;
     }
@@ -470,4 +589,28 @@ if (sendBtn && chatInput) {
     });
 }
 
-connect();
+// ================== 입장 연출 오버레이 ==================
+
+document.addEventListener("DOMContentLoaded", () => {
+    const overlay = document.getElementById("raid-entry-overlay");
+    if (!overlay) {
+        connect();
+        return;
+    }
+
+    const fadeDuration = 800;
+    const delayBeforeFade = 200;
+
+    setTimeout(() => {
+        overlay.classList.remove("show");
+        overlay.classList.add("fade-out");
+    }, delayBeforeFade);
+
+    setTimeout(() => {
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+    }, delayBeforeFade + fadeDuration + 50);
+
+    connect();
+});

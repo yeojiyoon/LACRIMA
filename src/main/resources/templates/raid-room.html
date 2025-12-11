@@ -39,9 +39,59 @@
     <div class="raid-left">
         <!-- 보스 영역 -->
         <div class="boss-area">
-            <div class="section-title">Boss</div>
-            <div class="boss-name" id="boss-name"
-                 th:text="${bossName}">Dark Dragon</div>
+            <div class="boss-header">
+                <div class="boss-main-info">
+                    <div class="section-title">Boss</div>
+                    <div class="boss-name" id="boss-name"
+                         th:text="${bossName}">Dark Dragon</div>
+                </div>
+
+                <!-- 🔥 보스 스킬 슬롯 3개 -->
+                <div class="boss-skill-list">
+
+                    <!-- skill1 -->
+                    <div class="boss-skill-slot" data-skill-index="1">
+                        <div class="boss-skill-icon skill-1"></div>
+
+                        <!-- 쿨타임 오버레이 (기본: 보임 / 나중에 JS로 값 갱신) -->
+                        <div class="boss-skill-overlay">
+                            <span class="cooldown-number" id="boss-skill1-cd">2</span>
+                        </div>
+
+                        <!-- 툴팁: 이름 + 설명 (나중에 서버/JS에서 텍스트 주입 가능) -->
+                        <div class="boss-skill-tooltip">
+                            <strong id="boss-skill1-name">브레스</strong>
+                            <p id="boss-skill1-desc">2인 3d5 공격</p>
+                        </div>
+                    </div>
+
+                    <!-- skill2 -->
+                    <div class="boss-skill-slot" data-skill-index="2">
+                        <div class="boss-skill-icon skill-2"></div>
+                        <div class="boss-skill-overlay">
+                            <span class="cooldown-number" id="boss-skill2-cd">1</span>
+                        </div>
+                        <div class="boss-skill-tooltip">
+                            <strong id="boss-skill2-name">강공</strong>
+                            <p id="boss-skill2-desc">2턴마다 1인에게 40 고정 피해</p>
+                        </div>
+                    </div>
+
+                    <!-- skill3 (예비 / 아직 안 써도 됨) -->
+                    <div class="boss-skill-slot" data-skill-index="3">
+                        <div class="boss-skill-icon skill-3"></div>
+                        <div class="boss-skill-overlay">
+                            <span class="cooldown-number" id="boss-skill3-cd">3</span>
+                        </div>
+                        <div class="boss-skill-tooltip">
+                            <strong id="boss-skill3-name">???</strong>
+                            <p id="boss-skill3-desc">아직 정의되지 않은 스킬</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 기존 HP 바는 그대로 아래에 -->
             <div class="hp-bar-wrapper">
                 <div class="hp-bar-fill" id="boss-hp-bar"></div>
             </div>
@@ -50,6 +100,7 @@
                 HP 7000 / 10000 (70%)
             </div>
         </div>
+
 
         <!-- 파티 영역 -->
         <div class="party-area">
@@ -108,6 +159,15 @@
     </div>
 
 </div>
+
+<!-- 레이드 입장 시 페이드 아웃용 오버레이 -->
+<div id="raid-entry-overlay" class="raid-entry-overlay show">
+    <div class="raid-entry-title" id="raid-entry-title"
+         th:text="${scenario.name}">레이드 이름</div>
+    <div class="raid-entry-desc" id="raid-entry-desc"
+         th:text="${scenario.description}">레이드 설명</div>
+</div>
+
 
 <script th:src="@{/js/raid-room.js}"></script>
 </body>

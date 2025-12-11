@@ -45,6 +45,8 @@
         <th>Max HP</th>
         <th>Current HP</th>
         <th>방어력</th>
+        <th>Max AP</th>   <!-- 🔥 추가 -->
+        <th>AP</th>       <!-- 🔥 추가 -->
         <!-- 🔽 여기부터 스킬 컬럼 추가 -->
         <th>스킬 1</th>
         <th>스킬 2</th>
@@ -60,6 +62,9 @@
         <td th:text="${b.maxHp}">1000</td>
         <td th:text="${b.currentHp}">800</td>
         <td th:text="${b.defense}">30</td>
+
+        <td th:text="${b.maxActionPoint}">1</td>
+        <td th:text="${b.actionPoint}">1</td>
 
         <!-- 스킬 1 이름 (없으면 - 표시) -->
         <td th:text="${b.skill1 != null ? b.skill1.name : '-'}">파이어 브레스</td>

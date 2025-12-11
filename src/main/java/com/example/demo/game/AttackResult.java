@@ -19,14 +19,18 @@ public class AttackResult {
     private final boolean bossDead;    // 이 행동으로 보스가 죽었는지
     private final boolean partyWiped;  // 보스 턴 후 파티 전원 사망인지
 
-    // ✅ 예전처럼 쓰던 6개짜리 생성자 (bossHits = null, 엔딩 플래그 false)
+    // 🔥 보스 스킬 로그용 (예: "[보스 스킬] 브레스 - 공격을 한다.")
+    private final String bossSkillText;
+
+    // ✅ 예전처럼 쓰던 6개짜리 생성자 (bossHits = null, 엔딩 플래그 false, 스킬로그 없음)
     public AttackResult(String message,
                         int damage,
                         int bossHp,
                         int maxHp,
                         int turn,
                         boolean turnEnded) {
-        this(message, damage, bossHp, maxHp, turn, turnEnded, null, false, false);
+        this(message, damage, bossHp, maxHp, turn, turnEnded,
+                null, false, false, null);
     }
 
     // ✅ 기존 7개짜리 생성자 (bossHits만 있는 버전)
@@ -37,10 +41,11 @@ public class AttackResult {
                         int turn,
                         boolean turnEnded,
                         List<RaidGameService.BossHit> bossHits) {
-        this(message, damage, bossHp, maxHp, turn, turnEnded, bossHits, false, false);
+        this(message, damage, bossHp, maxHp, turn, turnEnded,
+                bossHits, false, false, null);
     }
 
-    // ✅ 새로 추가된 9개짜리 생성자
+    // ✅ 기존 9개짜리 생성자 → 내부적으로 10개짜리로 위임
     public AttackResult(String message,
                         int damage,
                         int bossHp,
@@ -50,6 +55,21 @@ public class AttackResult {
                         List<RaidGameService.BossHit> bossHits,
                         boolean bossDead,
                         boolean partyWiped) {
+        this(message, damage, bossHp, maxHp, turn, turnEnded,
+                bossHits, bossDead, partyWiped, null);
+    }
+
+    // ✅ 새로 추가된 10개짜리 생성자 (보스 스킬 텍스트까지)
+    public AttackResult(String message,
+                        int damage,
+                        int bossHp,
+                        int maxHp,
+                        int turn,
+                        boolean turnEnded,
+                        List<RaidGameService.BossHit> bossHits,
+                        boolean bossDead,
+                        boolean partyWiped,
+                        String bossSkillText) {
         this.message = message;
         this.damage = damage;
         this.bossHp = bossHp;
@@ -59,6 +79,7 @@ public class AttackResult {
         this.bossHits = bossHits;
         this.bossDead = bossDead;
         this.partyWiped = partyWiped;
+        this.bossSkillText = bossSkillText;
     }
 
     public String getMessage() { return message; }
@@ -74,4 +95,6 @@ public class AttackResult {
 
     public boolean isBossDead() { return bossDead; }
     public boolean isPartyWiped() { return partyWiped; }
+
+    public String getBossSkillText() { return bossSkillText; }
 }

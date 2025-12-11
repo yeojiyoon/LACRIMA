@@ -39,6 +39,16 @@
         <input id="defense" type="number" th:field="*{defense}" required/>
     </div>
 
+    <div>
+        <label for="maxActionPoint">턴당 최대 행동(AP)</label>
+        <input id="maxActionPoint" type="number" th:field="*{maxActionPoint}" min="0" required/>
+    </div>
+
+    <div>
+        <label for="actionPoint">현재 AP</label>
+        <input id="actionPoint" type="number" th:field="*{actionPoint}" min="0" required/>
+    </div>
+
     <hr/>
 
     <!-- 스킬 1 -->

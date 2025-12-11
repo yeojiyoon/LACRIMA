@@ -1,8 +1,13 @@
-const chatWindow = document.getElementById("chat-window");
-const chatInput = document.getElementById("chat-input");
-const sendBtn = document.getElementById("chat-send-btn");
-const statusEl = document.getElementById("chat-status");
+const chatWindow   = document.getElementById("chat-window");
+const chatInput    = document.getElementById("chat-input");
+const sendBtn      = document.getElementById("chat-send-btn");
+const statusEl     = document.getElementById("chat-status");
 const enterRaidBtn = document.getElementById("enter-raid-btn");
+
+// 입장 연출 오버레이 요소
+const raidOverlay = document.getElementById("raid-entry-overlay");
+const raidTitleEl = document.getElementById("raid-entry-title");
+const raidDescEl  = document.getElementById("raid-entry-desc");
 
 // 템플릿에서 내려준 값
 const username =
@@ -117,13 +122,40 @@ if (sendBtn && chatInput) {
         if (e.key === "Enter") sendMessage();
     });
 }
+// ✅ 여기서 입장 연출 처리
+if (enterRaidBtn && raidOverlay && raidTitleEl && raidDescEl) {
+    const raidUrl  = enterRaidBtn.dataset.raidUrl;
+    const raidName = enterRaidBtn.dataset.raidName || "레이드";
+    const raidDesc = enterRaidBtn.dataset.raidDesc || "";
 
-if (enterRaidBtn) {
-    enterRaidBtn.addEventListener("click", () => {
-        const raidUrl = enterRaidBtn.dataset.raidUrl;
-        window.location.href = raidUrl;
+    let isTransitioning = false;
+
+    enterRaidBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        console.log("입장 연출 시작:", raidUrl, raidName, raidDesc);
+
+        raidTitleEl.textContent = raidName;
+        raidDescEl.textContent  = raidDesc;
+
+        // 혹시 남아있을지도 모를 상태 초기화
+        raidOverlay.classList.remove("fade-out");
+
+        // ⬅ 여기서 페이드 인만!
+        raidOverlay.classList.add("show");
+
+        const fadeDuration = 800;   // 페이드 인 0.8초
+        const holdDuration = 700;   // 완전히 까맣게 된 후 글자 잠깐 보여주는 시간
+
+        // 화면이 이미 까맣게 된 뒤에 페이지 이동
+        setTimeout(() => {
+            window.location.href = raidUrl;
+        }, fadeDuration + holdDuration); // 0.8 + 0.7 = 1.5초 후 이동
     });
 }
+
 
 // 자동 연결
 connect();

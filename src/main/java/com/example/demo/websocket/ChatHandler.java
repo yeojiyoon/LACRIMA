@@ -244,6 +244,7 @@ public class ChatHandler extends TextWebSocketHandler {
 
             AttackResult result = raidGameService.handleAttack(roomId, username, pc);
 
+            // 1) 플레이어 공격 결과 먼저 전송
             ChatMessage resultMsg = new ChatMessage();
             resultMsg.setType(MessageType.ATTACK_RESULT);
             resultMsg.setSender(username);
@@ -257,7 +258,7 @@ public class ChatHandler extends TextWebSocketHandler {
 
             broadcastToRoom(roomId, resultMsg);
 
-            // 🔥 이 공격으로 보스가 죽었는지 먼저 체크
+            // 2) 보스 사망이면 여기서 바로 처리하고 종료
             if (result.isBossDead()) {
                 ChatMessage deadMsg = new ChatMessage();
                 deadMsg.setType(MessageType.BOSS_DEAD);
@@ -266,12 +267,31 @@ public class ChatHandler extends TextWebSocketHandler {
                 deadMsg.setMessage(username + "가(이) 보스를 처치했습니다!");
 
                 broadcastToRoom(roomId, deadMsg);
-                return; // 보스 공격/턴 시작 메시지 보내지 않음
+                return;
             }
 
+            // 3) 보스 스킬 로그가 있으면 약간 딜레이 후 SYSTEM 메시지로 전송
+            String bossSkillText = result.getBossSkillText();
+            if (bossSkillText != null && !bossSkillText.isBlank()) {
+                try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+
+                ChatMessage skillMsg = new ChatMessage();
+                skillMsg.setType(MessageType.SYSTEM); // 별도 타입 만들기 귀찮으니 SYSTEM 사용
+                skillMsg.setSender("SYSTEM");
+                skillMsg.setRoomId(roomId);
+                skillMsg.setMessage(bossSkillText);
+
+                broadcastToRoom(roomId, skillMsg);
+            }
+
+            // 4) 턴 종료 시에만 보스 공격/턴 처리
             if (result.isTurnEnded()) {
                 var bossHits = result.getBossHits();
-                if (bossHits != null) {
+                if (bossHits != null && !bossHits.isEmpty()) {
+
+                    // 보스 스킬 메시지 이후, 또 살짝 딜레이
+                    try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+
                     for (RaidGameService.BossHit hit : bossHits) {
                         ChatMessage bossMsg = new ChatMessage();
                         bossMsg.setType(MessageType.BOSS_ATTACK);
@@ -307,14 +327,41 @@ public class ChatHandler extends TextWebSocketHandler {
                 }
 
                 // 🔥 여기서 "다음 턴 시작" 알림을 별도로 보냄
-                int nextTurn = raidGameService.getTurn(roomId); // 방금 nextTurn() 한 값
+                int nextTurn = raidGameService.getTurn(roomId);
+
+// 🔥 Executor 기반 쿨타임 스냅샷 가져오기
+                BossSkillExecutor.SkillCooldownInfo cdInfo =
+                        raidGameService.getSkillCooldownInfo(roomId);
+
                 ChatMessage turnMsg = new ChatMessage();
                 turnMsg.setType(MessageType.TURN_START);
                 turnMsg.setRoomId(roomId);
                 turnMsg.setTurn(nextTurn);
-                turnMsg.setMessage("보스가 다시 당신들을 주시한다."); //아마 여기서 공격대상 언급
+                turnMsg.setMessage("보스가 다시 당신들을 주시한다.");
+
+// 스킬1
+                turnMsg.setSkill1CdNow(cdInfo.getSkill1CdNow());
+                turnMsg.setSkill1CdMax(cdInfo.getSkill1CdMax());
+                turnMsg.setSkill1Available(cdInfo.isSkill1Available());
+                turnMsg.setSkill1Name(cdInfo.getSkill1Name());
+                turnMsg.setSkill1Desc(cdInfo.getSkill1Desc());
+
+// 스킬2
+                turnMsg.setSkill2CdNow(cdInfo.getSkill2CdNow());
+                turnMsg.setSkill2CdMax(cdInfo.getSkill2CdMax());
+                turnMsg.setSkill2Available(cdInfo.isSkill2Available());
+                turnMsg.setSkill2Name(cdInfo.getSkill2Name());
+                turnMsg.setSkill2Desc(cdInfo.getSkill2Desc());
+
+// 스킬3
+                turnMsg.setSkill3CdNow(cdInfo.getSkill3CdNow());
+                turnMsg.setSkill3CdMax(cdInfo.getSkill3CdMax());
+                turnMsg.setSkill3Available(cdInfo.isSkill3Available());
+                turnMsg.setSkill3Name(cdInfo.getSkill3Name());
+                turnMsg.setSkill3Desc(cdInfo.getSkill3Desc());
 
                 broadcastToRoom(roomId, turnMsg);
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -371,6 +418,7 @@ public class ChatHandler extends TextWebSocketHandler {
         AttackResult result =
                 raidGameService.handleDefend(roomId, defender, targetCharId, msg.getComment());
 
+        // 1) 방어 결과 먼저 전송
         ChatMessage resultMsg = new ChatMessage();
         resultMsg.setType(MessageType.DEFEND_RESULT);
         resultMsg.setSender(username);
@@ -384,10 +432,27 @@ public class ChatHandler extends TextWebSocketHandler {
 
         broadcastToRoom(roomId, resultMsg);
 
+        // 2) 보스 스킬 로그가 있으면 약간 딜레이 후 SYSTEM 메시지로 전송
+        String bossSkillText = result.getBossSkillText();
+        if (bossSkillText != null && !bossSkillText.isBlank()) {
+            try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+
+            ChatMessage skillMsg = new ChatMessage();
+            skillMsg.setType(MessageType.SYSTEM);
+            skillMsg.setSender("SYSTEM");
+            skillMsg.setRoomId(roomId);
+            skillMsg.setMessage(bossSkillText);
+
+            broadcastToRoom(roomId, skillMsg);
+        }
+
         if (result.isTurnEnded()) {
 
             var bossHits = result.getBossHits();
-            if (bossHits != null) {
+            if (bossHits != null && !bossHits.isEmpty()) {
+                // 스킬 로그 이후 약간 딜레이
+                try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+
                 for (RaidGameService.BossHit hit : bossHits) {
                     ChatMessage bossMsg = new ChatMessage();
                     bossMsg.setType(MessageType.BOSS_ATTACK);
@@ -421,11 +486,36 @@ public class ChatHandler extends TextWebSocketHandler {
             }
 
             int nextTurn = raidGameService.getTurn(roomId);
+            // 🔥 여기 추가: 쿨타임 스냅샷 가져오기
+            BossSkillExecutor.SkillCooldownInfo cdInfo =
+                    raidGameService.getSkillCooldownInfo(roomId);
+
             ChatMessage turnMsg = new ChatMessage();
             turnMsg.setType(MessageType.TURN_START);
             turnMsg.setRoomId(roomId);
             turnMsg.setTurn(nextTurn);
             turnMsg.setMessage("보스가 다시 당신들을 주시한다.");
+
+            // 🔥 스킬1
+            turnMsg.setSkill1CdNow(cdInfo.getSkill1CdNow());
+            turnMsg.setSkill1CdMax(cdInfo.getSkill1CdMax());
+            turnMsg.setSkill1Available(cdInfo.isSkill1Available());
+            turnMsg.setSkill1Name(cdInfo.getSkill1Name());
+            turnMsg.setSkill1Desc(cdInfo.getSkill1Desc());
+
+            // 🔥 스킬2
+            turnMsg.setSkill2CdNow(cdInfo.getSkill2CdNow());
+            turnMsg.setSkill2CdMax(cdInfo.getSkill2CdMax());
+            turnMsg.setSkill2Available(cdInfo.isSkill2Available());
+            turnMsg.setSkill2Name(cdInfo.getSkill2Name());
+            turnMsg.setSkill2Desc(cdInfo.getSkill2Desc());
+
+            // 🔥 스킬3
+            turnMsg.setSkill3CdNow(cdInfo.getSkill3CdNow());
+            turnMsg.setSkill3CdMax(cdInfo.getSkill3CdMax());
+            turnMsg.setSkill3Available(cdInfo.isSkill3Available());
+            turnMsg.setSkill3Name(cdInfo.getSkill3Name());
+            turnMsg.setSkill3Desc(cdInfo.getSkill3Desc());
 
             broadcastToRoom(roomId, turnMsg);
         }
@@ -495,15 +585,35 @@ public class ChatHandler extends TextWebSocketHandler {
         String command = msg.getCommand();
 
         if ("START_BATTLE".equals(command)) {
-            // 1) 서버 쪽 턴 1턴으로 초기화
             raidGameService.startBattle(roomId);
 
-            // 2) 모든 클라이언트에게 턴 시작 알림
+            // 🔥 시작할 때도 쿨타임 스냅샷
+            BossSkillExecutor.SkillCooldownInfo cdInfo =
+                    raidGameService.getSkillCooldownInfo(roomId);
+
             ChatMessage turnMsg = new ChatMessage();
             turnMsg.setType(MessageType.TURN_START);
             turnMsg.setRoomId(roomId);
             turnMsg.setTurn(1);
             turnMsg.setMessage("전투가 시작되었습니다! 보스가 당신들을 주시한다.");
+
+            turnMsg.setSkill1CdNow(cdInfo.getSkill1CdNow());
+            turnMsg.setSkill1CdMax(cdInfo.getSkill1CdMax());
+            turnMsg.setSkill1Available(cdInfo.isSkill1Available());
+            turnMsg.setSkill1Name(cdInfo.getSkill1Name());
+            turnMsg.setSkill1Desc(cdInfo.getSkill1Desc());
+
+            turnMsg.setSkill2CdNow(cdInfo.getSkill2CdNow());
+            turnMsg.setSkill2CdMax(cdInfo.getSkill2CdMax());
+            turnMsg.setSkill2Available(cdInfo.isSkill2Available());
+            turnMsg.setSkill2Name(cdInfo.getSkill2Name());
+            turnMsg.setSkill2Desc(cdInfo.getSkill2Desc());
+
+            turnMsg.setSkill3CdNow(cdInfo.getSkill3CdNow());
+            turnMsg.setSkill3CdMax(cdInfo.getSkill3CdMax());
+            turnMsg.setSkill3Available(cdInfo.isSkill3Available());
+            turnMsg.setSkill3Name(cdInfo.getSkill3Name());
+            turnMsg.setSkill3Desc(cdInfo.getSkill3Desc());
 
             broadcastToRoom(roomId, turnMsg);
         }

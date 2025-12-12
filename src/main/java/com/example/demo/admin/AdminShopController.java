@@ -19,7 +19,7 @@ public class AdminShopController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("shopItems", shopItemRepository.findAll());
-        return "admin/shop/list"; // templates/admin/shop/list.html
+        return "admin/shop/list"; // templates/admin/shop/members.html
     }
 
     // ===== 신규 폼 =====

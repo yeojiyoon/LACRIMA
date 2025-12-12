@@ -11,6 +11,12 @@
 
 <!-- 상단 바 -->
 <div class="myinfo-top-bar">
+    <button class="back-lobby-btn"
+            type="button"
+            th:onclick="|location.href='@{/lobby}'|">
+        ←
+    </button>
+
     <span th:text="'Player: ' + ${loginUser.username}">
         Player: alice
     </span>
@@ -19,12 +25,6 @@
           th:text="' | Character: ' + ${myCharacter.name}">
         | Character: 소드 앨리스
     </span>
-
-    <button class="back-lobby-btn"
-            type="button"
-            th:onclick="|location.href='@{/lobby}'|">
-        로비로 돌아가기
-    </button>
 </div>
 
 <div class="myinfo-root">
@@ -41,7 +41,7 @@
              th:style="|background-image: url('${myCharacter.portraitUrl}');|">
         </div>
 
-        <!-- 좌측 상단 텍스트 -->
+        <!-- 좌상단 오버레이(이름/HP) -->
         <div class="char-overlay">
 
             <!-- 이름 -->
@@ -72,19 +72,25 @@
                 </div>
             </div>
 
-            <!-- 스킬 패널 토글 버튼 -->
-            <button class="vn-toggle-btn" id="vn-toggle-btn" type="button">
-                <span class="vn-btn-label">SKILL LOADOUT</span>
-                <span class="vn-btn-text">
-                    <span th:if="${myCharacter != null && myCharacter.catchphrase != null}"
-                          th:text="${myCharacter.catchphrase}">
-                    </span>
-                    <span th:if="${myCharacter == null || myCharacter.catchphrase == null}">
-                        “오늘도, 네 뒤는 내가 지켜줄게.”
-                    </span>
+        </div>
+
+        <!-- ✅ 좌측 아래: 세로 배지 스택 (VN 박스 침범 X) -->
+        <div class="char-action-badges" aria-label="Quick actions">
+            <!-- SKILL: 패널 토글 -->
+            <button type="button" class="badge-btn badge-skill" id="skill-badge-btn" aria-label="Skill">
+                <span class="badge-icon" aria-hidden="true">
+                    <img src="https://www.svgrepo.com/show/152773/sword.svg" alt="">
                 </span>
+                <span class="badge-label">SKILL</span>
             </button>
 
+            <!-- SETTING: 링크(없으면 라우트 만들거나 버튼으로 변경) -->
+            <a class="badge-btn badge-setting" href="/settings" aria-label="Setting">
+                <span class="badge-icon" aria-hidden="true">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Ic_settings_48px.svg/1024px-Ic_settings_48px.svg.png" alt="">
+                </span>
+                <span class="badge-label">SETTING</span>
+            </a>
         </div>
 
         <!-- VN 말풍선 -->
@@ -155,8 +161,6 @@
                         <!-- 장착 버튼 -->
                         <div class="skill-row-actions">
                             <button type="button" class="equip-btn" th:attr="data-skill-code=${s.code}">장착</button>
-
-
                         </div>
 
                     </article>
@@ -191,8 +195,6 @@
                     </div>
 
                     <button type="button" class="unequip-btn" data-slot="1">해제</button>
-
-
                 </div>
 
                 <!-- SLOT1 비었을 때 -->
@@ -221,8 +223,6 @@
                     </div>
 
                     <button type="button" class="unequip-btn" data-slot="2">해제</button>
-
-
                 </div>
 
                 <!-- SLOT2 비었을 때 -->

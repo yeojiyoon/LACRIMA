@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>멤버</title>
+
+    <style>
+        :root{
+            --panel-bg: rgba(23, 23, 23, 0.72);
+            --card-bg: rgba(28, 28, 28, 0.78);
+            --border: rgba(255,255,255,0.10);
+            --border2: rgba(255,255,255,0.14);
+            --text: rgba(255,255,255,0.92);
+            --muted: rgba(255,255,255,0.65);
+            --shadow: 0 20px 50px rgba(0,0,0,0.55);
+            --radius: 18px;
+
+            --hp-bg: rgba(255,255,255,0.10);
+            --hp-fill: rgba(239, 68, 68, 0.92);
+
+            --chip: rgba(255,255,255,0.06);
+            --chip-border: rgba(255,255,255,0.12);
+        }
+
+        *{ box-sizing:border-box; }
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* 배경(로비/상점 톤 유지) */
+        .bg{
+            position: fixed;
+            inset: 0;
+            background-image: url("https://aipict.com/wp-content/uploads/2023/05/middle_eastern_castle02-1024x683.png");
+            background-size: cover;
+            background-position: center;
+            filter: saturate(1.05) contrast(1.05);
+            transform: scale(1.02);
+        }
+        .bg::after{
+            content:"";
+            position:absolute;
+            inset:0;
+            background:
+                    radial-gradient(1200px 600px at 30% 30%, rgba(0,0,0,0.25), rgba(0,0,0,0.70)),
+                    linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.70));
+        }
+
+        /* 상단 좌측 버튼 */
+        .top-left{
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 50;
+        }
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 14px;
+            border-radius: 999px;
+            background: rgba(37, 37, 37, 0.72);
+            border: 1px solid var(--border);
+            color: var(--text);
+            text-decoration:none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+        .btn:hover{ transform: translateY(-1px); }
+
+        /* 레이아웃 */
+        .wrap{
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            padding: 64px 20px 24px;
+            display:flex;
+            justify-content: center;
+        }
+
+        .panel{
+            width: min(1100px, calc(100% - 24px));
+            height: calc(100vh - 88px);
+            border-radius: var(--radius);
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            overflow: hidden;
+            display:flex;
+            flex-direction: column;
+        }
+
+        .panel-header{
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display:flex;
+            align-items:flex-end;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .panel-title{
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 0.4px;
+        }
+        .panel-sub{
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .panel-count{
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 650;
+            white-space: nowrap;
+        }
+
+        .list{
+            padding: 14px;
+            overflow:auto;
+            height: 100%;
+            display:flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ===== 멤버 카드 (좌로 길게) ===== */
+        .member-card{
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+            padding: 10px 12px;
+
+            display:grid;
+            /* ✅ who(이름) 폭 줄이고 skills 폭 늘림 */
+            grid-template-columns: 64px 1.05fr 0.85fr 0.95fr 360px;
+            gap: 10px;
+            align-items: center;
+            min-height: 88px;
+        }
+
+
+        .avatar{
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(0,0,0,0.25);
+            overflow:hidden;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .avatar img{
+            width:100%;
+            height:100%;
+            object-fit: cover;
+            display:block;
+        }
+
+        .who{
+            min-width: 0;
+        }
+        .name{
+            font-weight: 900;
+            font-size: 15px;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .subline{
+            margin-top: 6px;
+            display:flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .pill{
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 750;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--chip);
+            border: 1px solid var(--chip-border);
+            white-space: nowrap;
+        }
+
+        /* 스탯 4개 */
+        .stats{
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            min-width: 0;
+        }
+        .stat{
+            padding: 6px 8px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+            display:flex;
+            align-items:center;
+            justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
+        }
+        .stat-key{
+            font-size: 11px;
+            color: rgba(255,255,255,0.70);
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+        .stat-val{
+            font-size: 12px;
+            color: rgba(255,255,255,0.90);
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        /* HP */
+        .hp{
+            min-width: 0;
+            display:flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .hp-top{
+            display:flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        .hp-label{
+            font-size: 11px;
+            color: rgba(255,255,255,0.70);
+            font-weight: 900;
+            letter-spacing: 0.06em;
+        }
+        .hp-num{
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 800;
+        }
+        .hp-bar{
+            height: 10px;
+            border-radius: 999px;
+            background: var(--hp-bg);
+            border: 1px solid rgba(255,255,255,0.10);
+            overflow:hidden;
+        }
+        .hp-fill{
+            height:100%;
+            width: 0%;
+            background: linear-gradient(90deg,
+            rgba(248,113,113,0.95),
+            rgba(239,68,68,0.95));
+            border-radius: 999px;
+        }
+
+        /* 스킬 아이콘 전부 */
+        .skills{
+            display:flex;
+            justify-content: flex-start;  /* ✅ 왼쪽부터 */
+            align-items: center;
+            gap: 8px;
+
+            flex-wrap: nowrap;
+            overflow-x: auto;             /* ✅ 많으면 가로 스크롤 */
+            overflow-y: hidden;
+            padding-bottom: 2px;
+        }
+        .skills::-webkit-scrollbar{ height: 8px; }
+        .skills::-webkit-scrollbar-thumb{
+            background: rgba(255,255,255,0.18);
+            border-radius: 999px;
+        }
+        .skills::-webkit-scrollbar-track{
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+        }
+
+        .skill{
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            position: relative;
+            cursor: default;
+
+            overflow: visible;  /* ✅ 툴팁이 밖으로 나올 수 있게 */
+        }
+
+        .skill-thumb{
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;   /* ✅ 이미지는 여기서만 클리핑 */
+        }
+
+        .skill-thumb img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display:block;
+            opacity: 0.95;
+        }
+
+        /* 커스텀 툴팁 (VN 톤) */
+        .skill::after{
+            content: attr(data-tip);
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 10px);
+            transform: translateX(-50%) translateY(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 140ms ease, transform 140ms ease;
+
+            width: max-content;
+            max-width: 260px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.86);
+            border: 1px solid rgba(255,255,255,0.14);
+            box-shadow: 0 14px 34px rgba(0,0,0,0.60);
+            color: rgba(255,255,255,0.92);
+            font-size: 12px;
+            line-height: 1.35;
+            white-space: pre-wrap;
+            text-align: left;
+            z-index: 999;
+        }
+        .skill:hover::after{
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 모바일: 카드 접기 */
+        @media (max-width: 980px){
+            body{ overflow:auto; }
+            .wrap{ height: auto; }
+            .panel{ height: auto; min-height: calc(100vh - 88px); }
+            .member-card{
+                grid-template-columns: 56px 1fr;
+                grid-template-areas:
+          "av who"
+          "stats stats"
+          "hp hp"
+          "skills skills";
+            }
+            .avatar{ width: 56px; height: 56px; }
+            .who{ grid-area: who; }
+            .stats{ grid-area: stats; }
+            .hp{ grid-area: hp; }
+            .skills{ grid-area: skills; justify-content:flex-start; }
+        }
+        .skill-tip-portal{
+            position: fixed;
+            z-index: 999999;
+
+            width: max-content;
+            max-width: 280px;
+
+            padding: 9px 10px;
+            border-radius: 12px;
+
+            background: rgba(0,0,0,0.88);
+            border: 1px solid rgba(255,255,255,0.14);
+            box-shadow: 0 14px 34px rgba(0,0,0,0.60);
+
+            color: rgba(255,255,255,0.92);
+            font-size: 12px;
+            line-height: 1.35;
+            pointer-events: none;
+        }
+
+        .skill-tip-portal .t-name{
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .skill-tip-portal .t-meta{
+            font-size: 11px;
+            color: rgba(255,255,255,0.72);
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .skill-tip-portal .t-desc{
+            color: rgba(255,255,255,0.90);
+            white-space: normal;
+        }
+
+    </style>
+
+</head>
+
+<body>
+<div class="bg"></div>
+
+<div class="top-left">
+    <a class="btn" th:href="@{/lobby}">←</a>
+</div>
+
+<div class="wrap">
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">MEMBER</div>
+            </div>
+            <div class="panel-count"
+                 th:text="'총 ' + ${#lists.size(members)} + '명'">총 0명</div>
+        </div>
+
+        <div class="list">
+            <!-- ✅ 멤버 카드 반복 -->
+            <article class="member-card" th:each="m : ${members}">
+                <!-- 1) 두상 -->
+                <div class="avatar">
+                    <img th:if="${m.avatarUrl != null and !#strings.isEmpty(m.avatarUrl)}"
+                         th:src="${m.avatarUrl}" alt="avatar"
+                         onerror="this.style.display='none'; this.parentElement.style.background='rgba(0,0,0,0.35)';">
+                    <div th:if="${m.avatarUrl == null or #strings.isEmpty(m.avatarUrl)}"
+                         style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:800;">no img</div>
+                </div>
+
+                <!-- 2) 이름 + 작은 정보(선택) -->
+                <div class="who">
+                    <div class="name" th:text="${m.name}" th:title="${m.name}">캐릭터 이름</div>
+                    <div class="subline">
+                        <!-- 필요 없으면 지워도 됨 -->
+                    </div>
+                </div>
+
+                <!-- 3) 스탯 4개 -->
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-key">ATK</span>
+                        <span class="stat-val" th:text="${m.atk}">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-key">INT</span>
+                        <span class="stat-val" th:text="${m.intStat}">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-key">DET</span>
+                        <span class="stat-val" th:text="${m.det}">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-key">HP</span>
+                        <span class="stat-val" th:text="${m.hpStat}">0</span>
+                    </div>
+                </div>
+
+                <!-- 4) 체력바 nn/nn -->
+                <div class="hp">
+                    <div class="hp-top">
+                        <span class="hp-label">HP</span>
+                        <span class="hp-num" th:text="${m.hp} + ' / ' + ${m.maxHp}">0 / 0</span>
+                    </div>
+                    <div class="hp-bar">
+                        <!-- 퍼센트는 서버에서 m.hpRatio(0~100) 내려주는 걸 권장 -->
+                        <div class="hp-fill"
+                             th:style="'width:' + ${m.hpRatio} + '%;'"></div>
+                    </div>
+                </div>
+
+                <!-- 5) 가진 스킬 전부: 아이콘 + hover 툴팁 -->
+                <div class="skills">
+                    <div class="skill"
+                         th:each="s : ${m.skills}"
+                         th:attr="data-name=${s.displayName},
+                  data-tag=${s.tag},
+                  data-cd=${s.cooldown},
+                  data-desc=${s.description}">
+
+                        <div class="skill-thumb">
+                            <img th:if="${s.iconUrl != null and !#strings.isEmpty(s.iconUrl)}"
+                                 th:src="${s.iconUrl}" alt="skill">
+                            <img th:if="${s.iconUrl == null or #strings.isEmpty(s.iconUrl)}"
+                                 src="https://www.svgrepo.com/show/488403/store.svg"
+                                 alt="skill">
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <!-- empty -->
+            <div th:if="${#lists.isEmpty(members)}"
+                 style="padding:18px 0; text-align:center; color: var(--muted); font-weight:700;">
+                표시할 멤버가 없습니다.
+            </div>
+        </div>
+    </section>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        let tipEl = null;
+
+        function removeTip(){
+            if (tipEl) {
+                tipEl.remove();
+                tipEl = null;
+            }
+        }
+
+        function showTip(target){
+            removeTip();
+
+            const name = target.dataset.name || "";
+            const tag  = target.dataset.tag  || "UNKNOWN";
+            const cd   = target.dataset.cd   || "0";
+            const desc = target.dataset.desc || "";
+
+            tipEl = document.createElement("div");
+            tipEl.className = "skill-tip-portal";
+            tipEl.textContent = ""; // 아래에서 innerHTML로 넣을거라 비움
+
+            // 줄바꿈/레이아웃
+            tipEl.innerHTML =
+                `<div class="t-name">${escapeHtml(name)}</div>
+       <div class="t-meta">${escapeHtml(tag)}  •  ${escapeHtml(cd)}턴</div>
+       <div class="t-desc">${escapeHtml(desc).replace(/\n/g,"<br/>")}</div>`;
+
+            document.body.appendChild(tipEl);
+
+            const r = target.getBoundingClientRect();
+            // 아이콘 위쪽 중앙에 배치
+            const x = r.left + r.width/2;
+            const y = r.top;
+
+            // 일단 중앙 정렬로 놓고, 화면 밖이면 보정
+            tipEl.style.left = `${x}px`;
+            tipEl.style.top  = `${y}px`;
+            tipEl.style.transform = "translate(-50%, calc(-100% - 12px))";
+
+            // 보정(좌우 화면 밖 방지)
+            const tr = tipEl.getBoundingClientRect();
+            let dx = 0;
+            if (tr.left < 10) dx = 10 - tr.left;
+            if (tr.right > window.innerWidth - 10) dx = (window.innerWidth - 10) - tr.right;
+            if (dx !== 0) tipEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-100% - 12px))`;
+        }
+
+        function escapeHtml(str){
+            return String(str)
+                .replaceAll("&","&amp;")
+                .replaceAll("<","&lt;")
+                .replaceAll(">","&gt;")
+                .replaceAll('"',"&quot;")
+                .replaceAll("'","&#39;");
+        }
+
+        // 이벤트 바인딩
+        document.querySelectorAll(".skill").forEach(el => {
+            el.addEventListener("mouseenter", () => showTip(el));
+            el.addEventListener("mouseleave", removeTip);
+        });
+
+        window.addEventListener("scroll", removeTip, true);
+        window.addEventListener("resize", removeTip);
+    });
+</script>
+
+</body>
+</html>

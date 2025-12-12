@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const portrait = document.getElementById("char-portrait");
     const vnDialog = document.getElementById("vn-dialog");
-    const toggleBtn = document.getElementById("vn-toggle-btn");
+    const toggleBtn = document.getElementById("skill-badge-btn");
     const skillPanel = document.getElementById("skill-panel");
     const stateEl = document.getElementById("equip-state");
 

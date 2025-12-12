@@ -349,17 +349,22 @@ body {
 /* 캐릭터 PNG 영역 (카드가 아닌, 화면 위에 직접 배치) */
 .char-portrait {
     position: absolute;
-    bottom: 0;
-    left: 8%;
-    width: 360px;      /* 필요하면 숫자 조절하면서 맞춰보기 */
-    height: 560px;
+    bottom: -10px;          /* ✅ 아래로 살짝 내려서 더 커져도 발이 잘림 덜함 */
+    left: 20%;              /* ✅ 오른쪽으로 이동 (값 올리면 더 오른쪽) */
+
+    width: 440px;           /* ✅ 더 크게 */
+    height: 700px;          /* ✅ 더 크게 */
+
     background-image: url("https://mblogthumb-phinf.pstatic.net/MjAyMTAxMTBfMTQ0/MDAxNjEwMjg4NjQxNjU3.bwJY8-ior5y76_OX1dEO4TeROuncmNLLMiFPcoRkTZMg.J4V-uIQOSAc6g-YWltJzrlfZrLD491fbR4XSHE0YZTkg.PNG.creamy_soup/%EA%B7%B8%EB%A6%BC1.png?type=w800");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: bottom center;
+
     z-index: 2;
     cursor: pointer;
+    pointer-events: auto;
 }
+
 
 /* 기본 뱃지 모양 */
 .skill-row-tag {
@@ -443,4 +448,124 @@ body {
     background-size: cover;
     background-position: center;
     border-radius: 6px;
+}
+
+/* ===== CHAR overlay 안쪽: SKILL/SETTING 배지 2개 ===== */
+.char-action-badges{
+    position: absolute;
+    left: 22px;
+
+    /* ✅ VN 말풍선(bottom:40px, 높이 고려) 위로 띄워서 겹침 방지 */
+    bottom: 150px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    z-index: 6; /* vn-dialog(4)보다 위에 있어도, 위치가 안겹치게 배치 */
+    pointer-events: auto;
+}
+
+/* 로비 배지 톤 그대로 가져온 버전 */
+.badge-btn{
+    --bgA: rgba(55,55,55,0.92);
+    --bgB: rgba(28,28,28,0.92);
+    --stroke: rgba(255,255,255,0.16);
+    --stroke2: rgba(255,255,255,0.08);
+    --text: rgba(255,255,255,0.92);
+
+    position: relative;
+    width: 54px;
+    height: 58px;
+
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:flex-start;
+
+    text-decoration:none;
+    color: var(--text);
+
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,0.60));
+    user-select: none;
+}
+
+/* 배지 실루엣 */
+.badge-btn::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background: radial-gradient(circle at top left, var(--bgA), var(--bgB));
+    border: 1px solid var(--stroke);
+    border-radius: 14px;
+    clip-path: polygon(
+            14% 0%,
+            86% 0%,
+            100% 18%,
+            100% 72%,
+            50% 100%,
+            0% 72%,
+            0% 18%
+    );
+}
+
+/* 안쪽 라인 */
+.badge-btn::after{
+    content:"";
+    position:absolute;
+    inset: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke2);
+    clip-path: polygon(
+            14% 0%,
+            86% 0%,
+            100% 18%,
+            100% 72%,
+            50% 100%,
+            0% 72%,
+            0% 18%
+    );
+    pointer-events:none;
+}
+
+.badge-icon{
+    margin-top: 14px;
+    width: 26px;
+    height: 26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 3;
+}
+
+.badge-icon img{
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+}
+
+.badge-label{
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 0.2px;
+    z-index: 3;
+    opacity: 0.95;
+}
+
+.badge-btn:hover{ transform: translateY(-2px); }
+.badge-btn:hover::before{ border-color: rgba(255,255,255,0.26); }
+.badge-btn:active{ transform: translateY(0px) scale(0.98); }
+
+.badge-btn:focus-visible{ outline: none; }
+.badge-btn:focus-visible::before{
+    border-color: rgba(255,255,255,0.38);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
 }

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>상점</title>
+
+  <style>
+    :root{
+      --panel-bg: rgba(23, 23, 23, 0.72);
+      --card-bg: rgba(28, 28, 28, 0.78);
+      --border: rgba(255,255,255,0.10);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+      --accent: rgba(255,255,255,0.90);
+      --shadow: 0 20px 50px rgba(0,0,0,0.55);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* 배경 */
+    .bg{
+      position: fixed;
+      inset: 0;
+      background-image: url("https://imageoptimzer.acon3d.com/?image=https%3A%2F%2Fstorage.acon3d.com%2Fproduct%2FK-yCTUb1lZ8oj83xn-Ac0&width=2600&quality=70&watermark=true");
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+    }
+    .bg::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(1200px 600px at 30% 30%, rgba(0,0,0,0.25), rgba(0,0,0,0.70)),
+      linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.70));
+    }
+
+    /* 상단 좌측 버튼 */
+    .top-left{
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 50;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius: 999px;
+      background: rgba(37, 37, 37, 0.72);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration:none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+
+    /* 레이아웃 */
+    .wrap{
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 64px 48px 140px 64px;
+    }
+
+    /* 좌측: 아이템 패널 */
+    .left-panel{
+      height: 100%;
+      border-radius: var(--radius);
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+      margin-left: 50px;
+      margin-top: 20px;
+    }
+    .panel-header{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel-title{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+    }
+    .panel-sub{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .grid-wrap{
+      padding: 14px;
+      overflow: auto;
+      height: 100%;
+    }
+
+    /* ===== 카드 컴팩트 설정 ===== */
+    .items-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* 240 -> 200 */
+      gap: 10px; /* 12 -> 10 */
+    }
+
+    .item-card{
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+      min-height: 130px; /* 200 -> 160 */
+    }
+
+    .item-top{
+      display:flex;
+      gap: 10px;
+      padding: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .thumb{
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      flex: 0 0 auto;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .thumb img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display:block;
+    }
+
+    .item-head{
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    /* 한 줄 ... */
+    .ellipsis{
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 두 줄 ... */
+    .clamp-2{
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .item-name{
+      font-weight: 900;
+      font-size: 14px; /* 살짝 줄임 */
+      line-height: 1.2;
+      margin: 2px 0 6px;
+    }
+
+    /* 이름 아래 미니 텍스트 */
+    .item-mini{
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .mini-line{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.25;
+      min-width: 0;
+    }
+    .mini-label{
+      color: rgba(255,255,255,0.85);
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    .item-body{
+      padding: 8px 10px 10px;
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+      height: 100%;
+    }
+
+    .meta{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 8px;
+    }
+    .price{
+      font-weight: 900;
+      letter-spacing: 0.2px;
+    }
+    .remain{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .buy-btn{
+      cursor:pointer;
+      padding: 7px 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-weight: 850;
+      letter-spacing: 0.2px;
+      text-decoration: none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .buy-btn:hover{ background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+
+    /* ===== 중앙 집중형 VN 오버레이 ===== */
+    .vn{
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(10px);
+      width: min(880px, calc(100% - 32px));
+      z-index: 40;
+
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .vn.show{
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .vn-row{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+
+      padding: 14px 28px;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.78);
+
+      -webkit-mask-image: linear-gradient(
+              90deg,
+              transparent 0%,
+              #000 18%,
+              #000 82%,
+              transparent 100%
+      );
+      mask-image: linear-gradient(
+              90deg,
+              transparent 0%,
+              #000 18%,
+              #000 82%,
+              transparent 100%
+      );
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .vn-name{
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.35px;
+      color: rgba(255,255,255,0.65);
+      white-space: nowrap;
+    }
+
+    .vn-text{
+      font-size: 15px;
+      line-height: 1.5;
+      font-weight: 500;
+      color: rgba(255,255,255,0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== 전체 화면 캐릭터 ===== */
+    .char-overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .char-full{
+      position: absolute;
+      right: 100px;
+      bottom: 0;
+      height: 80vh;
+      max-width: none;
+      object-fit: contain;
+      filter: drop-shadow(0 30px 60px rgba(0,0,0,0.65));
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 180ms ease;
+    }
+
+    .char-full:hover{
+      transform: translateY(-6px) scale(1.01);
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .wrap{
+        padding: 64px 14px 170px;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+      .left-panel{ margin-left: 0; }
+      .char-full{
+        right: -120px;
+        height: 80vh;
+      }
+    }
+    :root{
+      /* 캐릭터가 차지하는 안전 영역(원하는대로 조절) */
+      --char-safe: 520px;
+    }
+
+    /* 패널이 캐릭터 영역을 침범하지 않도록 폭 제한 */
+    .left-panel{
+      max-width: calc(100vw - var(--char-safe));
+    }
+
+    /* 패널 내부 스크롤이 너무 좁아지면 모바일에서 자동 해제 */
+    @media (max-width: 980px){
+      .left-panel{
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="bg"></div>
+
+<div class="top-left">
+  <a class="btn" th:href="@{/lobby}">←</a>
+</div>
+
+<div class="wrap">
+  <section class="left-panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">상점</div>
+        <div class="panel-sub">판매중인 아이템만 표시됩니다.</div>
+      </div>
+      <div class="panel-sub" th:text="'총 ' + ${#lists.size(shopItems)} + '개'">총 0개</div>
+    </div>
+
+    <div class="grid-wrap">
+      <div class="items-grid">
+        <div class="item-card" th:each="item : ${shopItems}">
+          <div class="item-top">
+            <div class="thumb">
+              <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                   th:src="${item.imageUrl}"
+                   alt="img"
+                   onerror="this.style.display='none'; this.parentElement.style.background='rgba(0,0,0,0.35)';">
+            </div>
+
+            <div class="item-head">
+              <!-- 이름: 한 줄 ... + title 툴팁 -->
+              <div class="item-name ellipsis"
+                   th:text="${item.displayName}"
+                   th:title="${item.displayName}">
+                아이템 이름
+              </div>
+
+              <!-- 이름 바로 아래: 효과/설명 (2줄 ... + title 툴팁) -->
+              <div class="item-mini">
+                <div class="mini-line clamp-2"
+                     th:if="${item.itemEffect != null and !#strings.isEmpty(item.itemEffect)}"
+                     th:title="${item.itemEffect}">
+                  <span class="mini-label">효과</span>
+                  <span th:text="${item.itemEffect}">효과</span>
+                </div>
+
+                <div class="mini-line clamp-2"
+                     th:title="${item.itemDescription}">
+                  <span class="mini-label">설명</span>
+                  <span th:text="${item.itemDescription}">설명</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-body">
+            <div class="meta">
+              <div>
+                <div class="price" th:text="${item.itemCost} + ' G'">0 G</div>
+                <div class="remain" th:text="'잔여 ' + ${item.itemRemain}">잔여</div>
+              </div>
+
+              <a class="buy-btn"
+                 href="javascript:void(0)"
+                 th:attr="data-itemname=${item.itemName},
+                          data-displayname=${item.displayName},
+                          data-cost=${item.itemCost},
+                          data-remain=${item.itemRemain}">
+                구매
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="vn" id="vnBox">
+  <div class="vn-row">
+    <div class="vn-name" id="vnName">상점 NPC</div>
+    <div class="vn-text" id="vnText">… (캐릭터를 클릭하면 한마디가 떠요)</div>
+  </div>
+</div>
+
+<div class="char-overlay">
+  <img class="char-full"
+       src="https://i.namu.wiki/i/ev4f2R0KC1JYyG_z0VYvZ3Wcsto3VWZMNtWDEAVkSmOVfVYJj6-oXF_pSWArvpPgCL7S5L5kd5xB1ogoybMtPA.webp"
+       alt="character"
+       id="shop-character">
+</div>
+
+<script>
+  const vnLines = [
+    "어서 와. 필요한 게 있으면 골라 봐.",
+    "잔여 수량은 믿지 마… 누군가 먼저 집어갈 수도 있거든.",
+    "돈은 도망가지 않아. 하지만 기회는 도망가지.",
+    "구매 트윗만 올려줘. 확인은 내가 할게.",
+    "오늘은… 뭐가 좀 싸늘하네. 아무튼, 천천히 봐.",
+    "상점은 언제나 열려 있어. 네가 돌아오기만 한다면."
+  ];
+
+  const vnBox = document.getElementById("vnBox");
+  const vnNameEl = document.getElementById("vnName");
+  const vnTextEl = document.getElementById("vnText");
+  const charEl = document.getElementById("shop-character");
+
+  let vnVisible = false;
+
+  // 캐릭터 클릭 → VN 토글 + 대사
+  charEl.addEventListener("click", () => {
+    vnVisible = !vnVisible;
+
+    if(vnVisible){
+      const line = vnLines[Math.floor(Math.random() * vnLines.length)];
+      vnNameEl.textContent = "상점 NPC";
+      vnTextEl.textContent = line;
+      vnBox.classList.add("show");
+    } else {
+      vnBox.classList.remove("show");
+    }
+  });
+
+  // VN 클릭 → 닫기
+  vnBox.addEventListener("click", () => {
+    vnVisible = false;
+    vnBox.classList.remove("show");
+  });
+
+  // 구매 버튼 → 트위터 인텐트
+  function openTweetIntent(text){
+    const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".buy-btn");
+    if(!btn) return;
+
+    const displayName = btn.dataset.displayname || "";
+    const cost = btn.dataset.cost || "";
+
+    const text = `@System [${displayName} / ${cost}G/ 개수]`;
+
+    vnNameEl.textContent = "상점 NPC";
+    vnTextEl.textContent = `좋아! 준비해줄게.`;
+    vnBox.classList.add("show");
+    vnVisible = true;
+
+    openTweetIntent(text);
+  });
+</script>
+</body>
+</html>

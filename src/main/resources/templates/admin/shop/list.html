@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>상점 아이템 관리</title>
+</head>
+<body>
+
+<h1>상점 아이템</h1>
+
+<a th:href="@{/admin}">← 관리자 홈</a>
+<br><br>
+
+<a th:href="@{/admin/shop/new}">새 아이템 등록</a>
+
+<table border="1" style="margin-top:12px;">
+  <thead>
+  <tr>
+    <th>코드(itemName)</th>
+    <th>표시명</th>
+    <th>이미지</th>
+    <th>효과</th>
+    <th>설명</th>
+    <th>가격</th>
+    <th>잔여</th>
+    <th>관리</th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <tr th:each="item : ${shopItems}">
+    <td th:text="${item.itemName}"></td>
+    <td th:text="${item.displayName}"></td>
+
+    <td>
+      <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+           th:src="${item.imageUrl}"
+           alt="img"
+           style="max-width:64px; max-height:64px;">
+    </td>
+
+    <td th:text="${item.itemEffect}"></td>
+    <td th:text="${item.itemDescription}"></td>
+    <td th:text="${item.itemCost}"></td>
+    <td th:text="${item.itemRemain}"></td>
+    <td>
+      <form th:action="@{/admin/shop/{itemName}/toggle(itemName=${item.itemName})}"
+            method="post">
+
+        <input type="checkbox"
+               th:checked="${item.isOnsale}"
+               onchange="this.form.submit()">
+      </form>
+    </td>
+
+    <td>
+      <a th:href="@{/admin/shop/{itemName}/edit(itemName=${item.itemName})}">수정</a>
+
+      <form th:action="@{/admin/shop/{itemName}/delete(itemName=${item.itemName})}"
+            method="post" style="display:inline;">
+        <button type="submit">삭제</button>
+      </form>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

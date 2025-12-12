@@ -9,10 +9,16 @@
 </head>
 <body>
 
+<!-- 상단 바 -->
 <div class="myinfo-top-bar">
-    <span th:text="'Player: ' + ${username}"></span>
-    <span th:if="${character != null}"
-          th:text="' | Character: ' + ${character.name}"></span>
+    <span th:text="'Player: ' + ${loginUser.username}">
+        Player: alice
+    </span>
+
+    <span th:if="${myCharacter != null}"
+          th:text="' | Character: ' + ${myCharacter.name}">
+        | Character: 소드 앨리스
+    </span>
 
     <button class="back-lobby-btn"
             type="button"
@@ -23,63 +29,83 @@
 
 <div class="myinfo-root">
 
-    <!-- ===== LEFT: 전체 캐릭터 스테이지 ===== -->
+    <!-- ===== LEFT: 캐릭터 스테이지 ===== -->
     <section class="char-stage">
 
-        <!-- 🔥 전체 배경: 판타지 풍경 -->
         <div class="char-bg"></div>
 
-        <!-- 🔥 캐릭터 전용 영역 (PNG) -->
-        <div class="char-portrait" id="char-portrait"></div>
+        <!-- 캐릭터 반신 -->
+        <div th:if="${myCharacter != null && myCharacter.portraitUrl != null}"
+             class="char-portrait"
+             id="char-portrait"
+             th:style="|background-image: url('${myCharacter.portraitUrl}');|">
+        </div>
 
-        <!-- 좌상단 이름 + HP + 버튼 -->
+        <!-- 좌측 상단 텍스트 -->
         <div class="char-overlay">
+
+            <!-- 이름 -->
             <div class="char-name-block">
                 <div class="char-label">OPERATOR</div>
-                <div class="char-name"
-                     th:text="${character != null} ? ${character.name} : 'Unknown'">
-                    소드 앨리스
+                <div class="char-name">
+                    <span th:if="${myCharacter != null}"
+                          th:text="${myCharacter.name}">캐릭터 이름</span>
+                    <span th:if="${myCharacter == null}">Unknown</span>
                 </div>
             </div>
 
-            <div class="char-hp-block" th:if="${character != null}">
+            <!-- HP -->
+            <div class="char-hp-block" th:if="${myCharacter != null}">
                 <div class="char-hp-row">
                     <span class="hp-label">HP</span>
                     <span class="hp-text"
-                          th:text="${character.currentHp} + ' / ' + ${character.maxHp}">
-                    137 / 200
-                </span>
+                          th:text="${myCharacter.currentHp} + ' / ' + ${myCharacter.maxHp}">
+                        97 / 200
+                    </span>
                 </div>
+
                 <div class="char-hp-bar">
                     <div class="char-hp-fill"
-                         th:if="${character.maxHp > 0}"
-                         th:attr="style=|width: ${character.currentHp * 100 / character.maxHp}%|">
+                         th:if="${myCharacter.maxHp > 0}"
+                         th:attr="style=|width:${myCharacter.currentHp * 100 / myCharacter.maxHp}%|">
                     </div>
                 </div>
             </div>
 
-            <!-- 🔥 스킬 패널 토글 버튼 (유일한 버튼) -->
+            <!-- 스킬 패널 토글 버튼 -->
             <button class="vn-toggle-btn" id="vn-toggle-btn" type="button">
                 <span class="vn-btn-label">SKILL LOADOUT</span>
                 <span class="vn-btn-text">
-                “오늘도, 네 뒤는 내가 지켜줄게.”
-            </span>
+                    <span th:if="${myCharacter != null && myCharacter.catchphrase != null}"
+                          th:text="${myCharacter.catchphrase}">
+                    </span>
+                    <span th:if="${myCharacter == null || myCharacter.catchphrase == null}">
+                        “오늘도, 네 뒤는 내가 지켜줄게.”
+                    </span>
+                </span>
             </button>
+
         </div>
 
-        <!-- 비주얼 노벨 말풍선 (캐릭터 이미지 클릭으로 ON/OFF) -->
+        <!-- VN 말풍선 -->
         <div class="vn-dialog" id="vn-dialog">
             <div class="vn-dialog-name"
-                 th:text="${character != null} ? ${character.name} : '???'">
+                 th:text="${myCharacter != null ? myCharacter.name : '???'}">
                 소드 앨리스
             </div>
             <div class="vn-dialog-text">
-                ……괜찮아. 네가 있는 한, 난 무너지지 않아.
+                <span th:if="${myCharacter != null && myCharacter.oneLiner1 != null}"
+                      th:text="${myCharacter.oneLiner1}">
+                </span>
+                <span th:if="${myCharacter == null || myCharacter.oneLiner1 == null}">
+                    ……괜찮아. 네가 있는 한, 난 무너지지 않아.
+                </span>
             </div>
         </div>
+
     </section>
 
-    <!-- ===== 오른쪽: 슬라이드 스킬 패널 (오른쪽 절반) ===== -->
+    <!-- ===== RIGHT: 스킬 패널 ===== -->
     <aside class="skill-panel" id="skill-panel">
 
         <header class="skill-panel-header">
@@ -92,59 +118,130 @@
         <div class="skill-panel-body">
             <div class="skill-list">
 
-                <!-- TODO: 나중에 th:each로 교체 -->
-                <article class="skill-row" data-skill-id="1">
-                    <div class="skill-row-icon rarity-3"></div>
-                    <div class="skill-row-main">
-                        <div class="skill-row-top">
-                            <span class="skill-row-name">파열 사격</span>
-                            <span class="skill-row-tag tag-attack">공격</span>
-                        </div>
-                        <div class="skill-row-meta">코스트 2 · 쿨타임 3턴</div>
-                        <p class="skill-row-desc">
-                            보스에게 ATK × 2 피해를 주고 방어 무시 20%를 적용합니다.
-                        </p>
-                    </div>
-                </article>
+                <!-- 보유 스킬 목록 -->
+                <th:block th:if="${myCharacter != null && !#lists.isEmpty(myCharacter.skillInventory)}">
 
-                <article class="skill-row" data-skill-id="2">
-                    <div class="skill-row-icon rarity-2"></div>
-                    <div class="skill-row-main">
-                        <div class="skill-row-top">
-                            <span class="skill-row-name">철벽 자세</span>
-                            <span class="skill-row-tag tag-defense">방어</span>
+                    <article class="skill-row"
+                             th:each="s : ${myCharacter.skillInventory}">
+
+                        <!-- 스킬 아이콘 -->
+                        <div class="skill-row-icon"
+                             th:if="${s.imageUrl != null}"
+                             th:style="|background-image:url('${s.imageUrl}');|">
                         </div>
-                        <div class="skill-row-meta">코스트 1 · 쿨타임 2턴</div>
-                        <p class="skill-row-desc">
-                            이번 턴 동안 받는 피해를 40% 감소시키고 DET 판정에 +5를 부여합니다.
-                        </p>
-                    </div>
-                </article>
+                        <div class="skill-row-icon" th:if="${s.imageUrl == null}"></div>
+
+                        <div class="skill-row-main">
+                            <div class="skill-row-top">
+                                <span class="skill-row-name" th:text="${s.name}">스킬 이름</span>
+
+                                <span class="skill-row-tag"
+                                      th:classappend="${' tag-' + s.tag}"
+                                      th:text="${s.tag}">
+                                </span>
+                            </div>
+
+                            <div class="skill-row-meta"
+                                 th:text="${'쿨타임 ' + s.cooldown + '턴'}">
+                            </div>
+
+                            <p class="skill-row-desc"
+                               th:text="${(s.effectText != null && !#strings.isEmpty(s.effectText))
+                                            ? s.effectText
+                                            : s.description}">
+                            </p>
+                        </div>
+
+                        <!-- 장착 버튼 -->
+                        <div class="skill-row-actions">
+                            <button type="button" class="equip-btn" th:attr="data-skill-code=${s.code}">장착</button>
+
+
+                        </div>
+
+                    </article>
+
+                </th:block>
+
+                <div th:if="${myCharacter == null || #lists.isEmpty(myCharacter.skillInventory)}"
+                     style="font-size:13px; color:#aaa; padding:8px 4px;">
+                    보유 스킬이 없습니다.
+                </div>
 
             </div>
         </div>
 
-        <!-- 하단: 2칸 프리셋 -->
+        <!-- ===== 장착 슬롯 ===== -->
         <div class="skill-preset-bar">
+
+            <!-- SLOT 1 -->
             <div class="preset-slot" data-slot="1">
                 <div class="preset-slot-label">SLOT 1</div>
-                <div class="preset-slot-body preset-empty">
+
+                <div class="preset-slot-body"
+                     th:if="${myCharacter != null && myCharacter.equippedSkill1 != null}">
+
+                    <div class="preset-icon"
+                         th:style="|background-image:url('${myCharacter.equippedSkill1.imageUrl}');|">
+                    </div>
+
+                    <div class="preset-text">
+                        <div th:text="${myCharacter.equippedSkill1.name}"></div>
+                        <small th:text="'[' + ${myCharacter.equippedSkill1.tag} + ' / 쿨:' + ${myCharacter.equippedSkill1.cooldown} + ']'"></small>
+                    </div>
+
+                    <button type="button" class="unequip-btn" data-slot="1">해제</button>
+
+
+                </div>
+
+                <!-- SLOT1 비었을 때 -->
+                <div class="preset-slot-body preset-empty"
+                     th:if="${myCharacter == null || myCharacter.equippedSkill1 == null}">
                     <div class="preset-icon"></div>
                     <div class="preset-text">스킬을 선택하세요</div>
                 </div>
+
             </div>
 
+            <!-- SLOT 2 -->
             <div class="preset-slot" data-slot="2">
                 <div class="preset-slot-label">SLOT 2</div>
-                <div class="preset-slot-body preset-empty">
+
+                <div class="preset-slot-body"
+                     th:if="${myCharacter != null && myCharacter.equippedSkill2 != null}">
+
+                    <div class="preset-icon"
+                         th:style="|background-image:url('${myCharacter.equippedSkill2.imageUrl}');|">
+                    </div>
+
+                    <div class="preset-text">
+                        <div th:text="${myCharacter.equippedSkill2.name}"></div>
+                        <small th:text="'[' + ${myCharacter.equippedSkill2.tag} + ' / 쿨:' + ${myCharacter.equippedSkill2.cooldown} + ']'"></small>
+                    </div>
+
+                    <button type="button" class="unequip-btn" data-slot="2">해제</button>
+
+
+                </div>
+
+                <!-- SLOT2 비었을 때 -->
+                <div class="preset-slot-body preset-empty"
+                     th:if="${myCharacter == null || myCharacter.equippedSkill2 == null}">
                     <div class="preset-icon"></div>
                     <div class="preset-text">스킬을 선택하세요</div>
                 </div>
+
             </div>
+
+        </div>
+
+        <div id="equip-state"
+             th:attr="data-slot1=${myCharacter != null and myCharacter.equippedSkill1 != null ? myCharacter.equippedSkill1.code : ''},
+              data-slot2=${myCharacter != null and myCharacter.equippedSkill2 != null ? myCharacter.equippedSkill2.code : ''}">
         </div>
 
     </aside>
-
 </div>
 
 </body>

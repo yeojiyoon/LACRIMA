@@ -3,11 +3,17 @@ package com.example.demo.web;
 import com.example.demo.game.*;
 import com.example.demo.user.UserAccount;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.example.demo.game.Skill;
+import com.example.demo.game.SkillRepository;
+
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Controller
 public class PageController {
@@ -16,15 +22,19 @@ public class PageController {
     private final RaidPartyService raidPartyService;
     private final RaidScenarioRepository raidScenarioRepository;
     private final BossService bossService;
+    private final PlayerCharacterRepository playerCharacterRepository;
+    private final SkillRepository skillRepository;   // 🔹 추가
 
     public PageController(PlayerCharacterService playerCharacterService,
                           RaidPartyService raidPartyService,
                           RaidScenarioRepository raidScenarioRepository,
-                          BossService bossService) {
+                          BossService bossService, PlayerCharacterRepository playerCharacterRepository, SkillRepository skillRepository) {
         this.playerCharacterService = playerCharacterService;
         this.raidPartyService = raidPartyService;
         this.raidScenarioRepository = raidScenarioRepository;
         this.bossService = bossService;
+        this.playerCharacterRepository = playerCharacterRepository;
+        this.skillRepository = skillRepository;
     }
 
     @GetMapping("/login")
@@ -40,7 +50,18 @@ public class PageController {
             return "redirect:/login";
         }
 
-        model.addAttribute("username", user.getUsername());
+        // 🔹 내 캐릭터 조회
+        PlayerCharacter myChar = playerCharacterRepository.findByUser(user)
+                .orElse(null);
+
+        // 🔹 유저 정보는 객체 그대로 싣기 (필요하면 템플릿에서 loginUser.username 등으로 접근)
+        model.addAttribute("loginUser", user);
+
+        // 🔹 캐릭터도 통째로
+        model.addAttribute("myCharacter", myChar);
+
+        // 기존처럼 직접 값도 싣고 싶으면 유지해도 됨 (점진적 마이그레이션용)
+        model.addAttribute("username", user.getUsername()); //리펙터링할때 수정.
         model.addAttribute("nickname", user.getNickname());
         model.addAttribute("role", user.getRole());
 
@@ -165,16 +186,79 @@ public class PageController {
             return "redirect:/login";
         }
 
-        model.addAttribute("username", user.getUsername());
-        model.addAttribute("nickname", user.getNickname());
-        model.addAttribute("role", user.getRole());
+        PlayerCharacter myChar = playerCharacterRepository.findByUser(user)
+                .orElse(null);
 
-        PlayerCharacter character = playerCharacterService.findByUser(user);
-        model.addAttribute("character", character);
-
-        // TODO: 나중에 실제 스킬 리스트 넣기
-        // model.addAttribute("skills", skillService.findByCharacter(character));
+        // 여러 이름으로 다 실어보내기 (호환용)
+        model.addAttribute("loginUser", user);
+        model.addAttribute("username", user.getUsername()); // 옛 템플릿 호환
+        model.addAttribute("character", myChar);            // 옛 템플릿 호환
+        model.addAttribute("myCharacter", myChar);          // 새 코드
 
         return "my-info";
     }
+
+
+    @PostMapping("/my-info/skill/equip")
+    @ResponseBody
+    public ResponseEntity<?> equipSkill(@RequestBody Map<String, String> body,
+                                        HttpSession session) {
+
+        UserAccount user = (UserAccount) session.getAttribute("loginUser");
+        if (user == null) return ResponseEntity.status(401).build();
+
+        PlayerCharacter ch = playerCharacterRepository.findByUser(user)
+                .orElseThrow();
+
+        String skillCode = body.get("skillCode");
+        Skill skill = skillRepository.findById(skillCode).orElseThrow();
+
+        // 이미 장착했는지 체크
+        if (!skill.equals(ch.getEquippedSkill1()) &&
+                !skill.equals(ch.getEquippedSkill2())) {
+
+            if (ch.getEquippedSkill1() == null) {
+                ch.setEquippedSkill1(skill);
+            } else if (ch.getEquippedSkill2() == null) {
+                ch.setEquippedSkill2(skill);
+            } else {
+                return ResponseEntity.badRequest().body("모든 슬롯이 가득 찼습니다.");
+            }
+
+            playerCharacterRepository.save(ch);
+        }
+
+        // 🔥 여기서부터 Map.of 대신 HashMap 사용
+        Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("slot1", SkillDTO.from(ch.getEquippedSkill1()));  // null 가능
+        resp.put("slot2", SkillDTO.from(ch.getEquippedSkill2()));  // null 가능
+
+        return ResponseEntity.ok(resp);
+    }
+
+    @PostMapping("/my-info/skill/unequip")
+    @ResponseBody
+    public ResponseEntity<?> unequipSkill(@RequestBody Map<String, String> body,
+                                          HttpSession session) {
+
+        UserAccount user = (UserAccount) session.getAttribute("loginUser");
+        if (user == null) return ResponseEntity.status(401).build();
+
+        PlayerCharacter ch = playerCharacterRepository.findByUser(user)
+                .orElseThrow();
+
+        int slot = Integer.parseInt(body.get("slot"));
+
+        if (slot == 1) ch.setEquippedSkill1(null);
+        else if (slot == 2) ch.setEquippedSkill2(null);
+
+        playerCharacterRepository.save(ch);
+
+        Map<String, Object> resp = new java.util.HashMap<>();
+        resp.put("slot1", SkillDTO.from(ch.getEquippedSkill1()));  // null OK
+        resp.put("slot2", SkillDTO.from(ch.getEquippedSkill2()));  // null OK
+
+        return ResponseEntity.ok(resp);
+    }
+
 }

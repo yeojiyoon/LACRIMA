@@ -236,13 +236,14 @@ function renderParty(party) {
         const card = document.createElement("div");
         card.className = "char-card";
 
-        // 🔹 캐릭터 이미지
+        // 🔹 두상
         const portrait = document.createElement("div");
         portrait.className = "char-portrait";
-        // TODO: member.imageUrl 들어오면 여기서 backgroundImage 세팅
-        // if (member.imageUrl) {
-        //     portrait.style.backgroundImage = `url(${member.imageUrl})`;
-        // }
+        if (member.avatarUrl) {
+            portrait.style.backgroundImage = `url('${member.avatarUrl}')`;
+            portrait.style.backgroundSize = "cover";
+            portrait.style.backgroundPosition = "center";
+        }
 
         const info = document.createElement("div");
         info.className = "char-info";
@@ -337,6 +338,9 @@ function renderParty(party) {
         stats.appendChild(row2);
 
         // === 3. 스킬 2개 (AP 아래, 스탯 오른쪽 세로) ===
+        // ✅ 여기 추가: 스킬 배열 만들기 (skill1/skill2)
+        const skills = [member.skill1 ?? null, member.skill2 ?? null];
+
         const skillCol = document.createElement("div");
         skillCol.className = "char-skill-col";
 
@@ -352,16 +356,30 @@ function renderParty(party) {
             tooltip.className = "char-skill-tooltip";
 
             const strong = document.createElement("strong");
-            strong.textContent = `스킬 ${idx}`;
-
             const p = document.createElement("p");
-            p.textContent = "아직 DB 미연결";
+
+            const s = skills[idx - 1];
+
+            if (s) {
+                if (s.imageUrl) {
+                    icon.style.backgroundImage = `url('${s.imageUrl}')`;
+                    icon.style.backgroundSize = "cover";
+                    icon.style.backgroundPosition = "center";
+                }
+                strong.textContent = s.name ?? `스킬 ${idx}`;
+                p.textContent = s.effectText?.trim()
+                    ? s.effectText
+                    : (s.description ?? "");
+            } else {
+                strong.textContent = `스킬 ${idx}`;
+                p.textContent = "미장착";
+                slot.classList.add("empty");
+            }
 
             tooltip.appendChild(strong);
             tooltip.appendChild(p);
             slot.appendChild(icon);
             slot.appendChild(tooltip);
-
             skillCol.appendChild(slot);
         });
 

@@ -360,3 +360,87 @@ body {
     z-index: 2;
     cursor: pointer;
 }
+
+/* 기본 뱃지 모양 */
+.skill-row-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #555;
+    background: #2b2b2b;
+    color: #e5e7eb;
+    text-transform: uppercase;
+}
+
+.equip-form {
+    margin-left: auto;   /* 🔥 오른쪽 끝으로 밀기 */
+}
+
+.unequip-form {
+    margin-left: auto; /* 🔥 오른쪽으로 밀기 */
+}
+
+/* 태그별 색 */
+.skill-row-tag.tag-ATTACK {
+    background: rgba(220, 38, 38, 0.25);
+    border-color: #f97373;
+    color: #fecaca;
+}
+
+.skill-row-tag.tag-DEFENSE {
+    background: rgba(37, 99, 235, 0.25);
+    border-color: #60a5fa;
+    color: #bfdbfe;
+}
+
+.skill-row-tag.tag-HEAL {
+    background: rgba(22, 163, 74, 0.25);
+    border-color: #4ade80;
+    color: #bbf7d0;
+}
+
+.skill-row-tag.tag-BUFF {
+    background: rgba(202, 138, 4, 0.25);
+    border-color: #fbbf24;
+    color: #fef9c3;
+}
+
+/* 스킬 아이콘 네모 */
+.skill-row-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: #3a3a3a;   /* 이미지 없을 때 회색 */
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.skill-row-actions {
+    margin-top: 6px;
+    text-align: right;
+}
+
+.equip-btn,
+.unequip-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #6b7280;
+    background: #111827;
+    color: #e5e7eb;
+    cursor: pointer;
+}
+
+.equip-btn[disabled] {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.preset-icon {
+    width: 40px;
+    height: 40px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 6px;
+}

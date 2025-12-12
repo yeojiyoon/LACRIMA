@@ -1,5 +1,7 @@
 package com.example.demo.game;
 
+import com.example.demo.web.SkillDTO;
+
 public class PartyMemberView {
 
     private final Long characterId;
@@ -15,30 +17,44 @@ public class PartyMemberView {
     private final int detStat;
     private final int hpStat;  // (스탯으로서의 HP, pc.getHp())
 
-    public PartyMemberView(Long characterId,
-                           String name,
-                           int hp,
-                           int maxHp,
-                           int ap,
-                           int atkStat,
-                           int intStat,
-                           int detStat,
-                           int hpStat) {
+    // ✅ 두상 URL
+    private final String avatarUrl;
+
+    // ✅ 장착 스킬 2개 (null 가능)
+    private final SkillDTO skill1;
+    private final SkillDTO skill2;
+
+    public PartyMemberView(
+            Long characterId,
+            String name,
+            int hp,
+            int maxHp,
+            int ap,
+            int atkStat,
+            int intStat,
+            int detStat,
+            int hpStat,
+            String avatarUrl,
+            SkillDTO skill1,
+            SkillDTO skill2
+    ) {
         this.characterId = characterId;
         this.name = name;
         this.hp = hp;
         this.maxHp = maxHp;
         this.ap = ap;
+
         this.atkStat = atkStat;
         this.intStat = intStat;
         this.detStat = detStat;
         this.hpStat = hpStat;
 
-        if (maxHp <= 0) {
-            this.hpRatio = 0;
-        } else {
-            this.hpRatio = (int) Math.round(hp * 100.0 / maxHp);
-        }
+        this.avatarUrl = avatarUrl;
+        this.skill1 = skill1;
+        this.skill2 = skill2;
+
+        if (maxHp <= 0) this.hpRatio = 0;
+        else this.hpRatio = (int) Math.round(hp * 100.0 / maxHp);
     }
 
     public static PartyMemberView from(PlayerCharacter pc) {
@@ -51,11 +67,13 @@ public class PartyMemberView {
                 pc.getAtk(),
                 pc.getIntelligence(),
                 pc.getDet(),
-                pc.getHp()          // 스탯형 HP
+                pc.getHp(),
+                pc.getAvatarUrl(),                     // ✅ 두상
+                SkillDTO.from(pc.getEquippedSkill1()),  // ✅ 슬롯1
+                SkillDTO.from(pc.getEquippedSkill2())   // ✅ 슬롯2
         );
     }
 
-    // getter들
     public Long getCharacterId() { return characterId; }
     public String getName() { return name; }
     public int getHp() { return hp; }
@@ -67,4 +85,8 @@ public class PartyMemberView {
     public int getIntStat() { return intStat; }
     public int getDetStat() { return detStat; }
     public int getHpStat() { return hpStat; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public SkillDTO getSkill1() { return skill1; }
+    public SkillDTO getSkill2() { return skill2; }
 }

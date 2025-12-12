@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editMode} ? '아이템 수정' : '아이템 등록'"></title>
+</head>
+<body>
+
+<h1 th:text="${editMode} ? '아이템 수정' : '아이템 등록'"></h1>
+
+<a th:href="@{/admin/shop}">← 목록으로</a>
+<br><br>
+
+<!-- ===== 신규 등록 폼 ===== -->
+<form th:if="${!editMode}"
+      th:object="${shopItemForm}"
+      th:action="@{/admin/shop/new}"
+      method="post">
+
+    <div>
+        <label>코드(itemName)</label>
+        <input type="text" th:field="*{itemName}" required>
+    </div>
+
+    <div>
+        <label>표시명(displayName)</label>
+        <input type="text" th:field="*{displayName}" required>
+    </div>
+
+    <div>
+        <label>이미지 URL</label>
+        <input type="text" th:field="*{imageUrl}">
+    </div>
+
+    <div>
+        <label>효과(itemEffect)</label>
+        <textarea th:field="*{itemEffect}" rows="3" cols="60"></textarea>
+    </div>
+
+    <div>
+        <label>설명(itemDescription)</label>
+        <textarea th:field="*{itemDescription}" rows="3" cols="60" required></textarea>
+    </div>
+
+    <div>
+        <label>가격(itemCost)</label>
+        <input type="number" th:field="*{itemCost}" min="0" required>
+    </div>
+
+    <div>
+        <label>잔여(itemRemain)</label>
+        <input type="number" th:field="*{itemRemain}" min="0" required>
+    </div>
+
+    <div>
+        <label>
+            <input type="checkbox" th:field="*{isOnsale}">
+            판매중(상점 노출)
+        </label>
+    </div>
+
+    <br>
+    <button type="submit">등록</button>
+</form>
+
+<!-- ===== 수정 폼 ===== -->
+<form th:if="${editMode}"
+      th:object="${shopItemForm}"
+      th:action="@{/admin/shop/{itemName}/edit(itemName=${itemName})}"
+      method="post">
+
+    <div>
+        <label>코드(itemName)</label>
+        <input type="text" th:field="*{itemName}" readonly required>
+        <small>※ 코드(PK)는 수정 불가</small>
+    </div>
+
+    <div>
+        <label>표시명(displayName)</label>
+        <input type="text" th:field="*{displayName}" required>
+    </div>
+
+    <div>
+        <label>이미지 URL</label>
+        <input type="text" th:field="*{imageUrl}">
+    </div>
+
+    <div>
+        <label>효과(itemEffect)</label>
+        <textarea th:field="*{itemEffect}" rows="3" cols="60"></textarea>
+    </div>
+
+    <div>
+        <label>설명(itemDescription)</label>
+        <textarea th:field="*{itemDescription}" rows="3" cols="60" required></textarea>
+    </div>
+
+    <div>
+        <label>가격(itemCost)</label>
+        <input type="number" th:field="*{itemCost}" min="0" required>
+    </div>
+
+    <div>
+        <label>잔여(itemRemain)</label>
+        <input type="number" th:field="*{itemRemain}" min="0" required>
+    </div>
+
+    <div>
+        <label>
+            <input type="checkbox" th:field="*{isOnsale}">
+            판매중(상점 노출)
+        </label>
+    </div>
+
+    <br>
+    <button type="submit">수정 저장</button>
+</form>
+
+</body>
+</html>

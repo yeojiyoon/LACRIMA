@@ -156,28 +156,6 @@ body {
 }
 
 /* 비주얼 노벨 말풍선 */
-.vn-dialog {
-    position: absolute;
-    left: 64px;
-    bottom: 40px;
-    max-width: 460px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(0,0,0,0.88);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.9);
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.22s ease-out, transform 0.22s ease-out;
-    pointer-events: none;
-    z-index: 4;
-}
-
-.vn-dialog.show {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
 .vn-dialog-name {
     font-size: 12px;
     opacity: 0.8;
@@ -207,6 +185,67 @@ body {
 }
 
 /* 버튼 눌렀을 때 열리도록 */
+
+.vn-dialog{
+    position: fixed;
+
+    /* 🔥 글자 길이에 맞는 너비 */
+    width: auto;
+    display: inline-block;
+    max-width: min(420px, calc(100vw - 24px));
+
+    /* 줄바꿈 */
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+
+    padding: 12px 14px;
+    border-radius: 14px;
+
+    /* 본체 배경 */
+    background: rgba(0,0,0,0.86);
+
+    /* 깊이감용 그림자 (경계 블러와 역할 분리) */
+    box-shadow:
+            0 10px 30px rgba(0,0,0,0.90);
+
+    /* 유리 느낌 */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    /* 등장/퇴장 애니메이션 */
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    pointer-events: none;
+    transition:
+            opacity 180ms ease,
+            transform 220ms cubic-bezier(.2,.8,.2,1);
+
+    z-index: 999;
+}
+
+/* 🔥 진짜 가우시안처럼 퍼지는 경계 */
+.vn-dialog::before{
+    content:"";
+    position:absolute;
+    inset: -6px;
+    border-radius: inherit;
+
+    background: rgba(255,255,255,0.18);
+    filter: blur(8px);
+    opacity: 0.55;
+
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 표시 상태 */
+.vn-dialog.show{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
 .skill-panel.open {
     transform: translateX(0);
 }
@@ -569,3 +608,198 @@ body {
     border-color: rgba(255,255,255,0.38);
     box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
 }
+/* ===== SETTING 모달 ===== */
+.settings-backdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 40;
+}
+
+.settings-window{
+    position: fixed;
+    left: 110px;
+    top: 120px;
+    width: min(520px, calc(100vw - 40px));
+    border-radius: 16px;
+
+    background: rgba(25,25,25,0.92);
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    z-index: 50;
+    overflow: hidden;
+}
+
+/* 상단바: 드래그 핸들 */
+.settings-header{
+    padding: 12px 12px 10px;
+    display:flex;
+    align-items:flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    background: linear-gradient(135deg, rgba(55,55,55,0.55), rgba(20,20,20,0.55));
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+
+    cursor: grab;
+    user-select: none;
+}
+.settings-header:active{ cursor: grabbing; }
+
+.settings-label{
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+.settings-h1{
+    margin-top: 2px;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.settings-close{
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(0,0,0,0.25);
+    color: rgba(255,255,255,0.90);
+    cursor: pointer;
+}
+.settings-close:hover{ background: rgba(255,255,255,0.06); }
+
+.settings-body{
+    padding: 12px;
+}
+
+.settings-section-title{
+    font-size: 12px;
+    font-weight: 900;
+    opacity: 0.85;
+    margin-bottom: 10px;
+}
+
+.settings-field{
+    display:flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.settings-field span{
+    font-size: 11px;
+    opacity: 0.75;
+    font-weight: 800;
+}
+
+.settings-field input{
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.30);
+    color: rgba(255,255,255,0.92);
+    padding: 0 12px;
+    outline: none;
+}
+.settings-field input:focus{
+    border-color: rgba(255,255,255,0.28);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+}
+
+.settings-actions{
+    margin-top: 10px;
+    display:flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.settings-btn{
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(0,0,0,0.25);
+    color: rgba(255,255,255,0.92);
+}
+.settings-btn.ghost:hover{ background: rgba(255,255,255,0.06); }
+.settings-btn.primary{
+    border: none;
+    background: linear-gradient(135deg, #f4f4f4, #737373);
+    color: #111;
+}
+.settings-btn.primary:hover{ filter: brightness(1.05); }
+
+.settings-hint{
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.70);
+    min-height: 18px;
+}
+.char-stats{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* 한 줄 */
+.stat-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 칩(고정 너비) */
+.stat-chip{
+    width: 46px;
+    height: 22px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+
+    color: #fff;
+
+    box-shadow:
+            0 0 0 1px rgba(255,255,255,0.25),
+            0 4px 12px rgba(0,0,0,0.6);
+
+    user-select: none;
+}
+
+/* 숫자만 */
+.stat-value{
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+}
+
+/* 색상 */
+.stat-chip.atk{ background: linear-gradient(135deg, #7a0d0d, #a53333); }
+.stat-chip.int{ background: linear-gradient(135deg, #7a0d0d, #a53333); }
+.stat-chip.det{ background: linear-gradient(135deg, #7a0d0d, #a53333); }
+.stat-chip.hp { background: linear-gradient(135deg, #7a0d0d, #a53333); }
+
+/* 화면 좁을 때 자동 줄바꿈 */
+@media (max-width: 520px){
+    .char-stats{
+        grid-template-columns: repeat(2, max-content);
+    }
+}
+
+
+.settings-hint.ok{ color: rgba(134,239,172,0.95); }
+.settings-hint.err{ color: rgba(248,113,113,0.95); }

@@ -3,8 +3,7 @@ package com.example.demo.game;
 import com.example.demo.user.UserAccount;
 import jakarta.persistence.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "player_character")
@@ -196,6 +195,19 @@ public class PlayerCharacter {
         if (this.currentHp > this.maxHp) {
             this.currentHp = this.maxHp;
         }
+    }
+
+    @Transient
+    public String getRandomOneLiner() {
+        List<String> list = new ArrayList<>(3);
+
+        if (oneLiner1 != null && !oneLiner1.isBlank()) list.add(oneLiner1);
+        if (oneLiner2 != null && !oneLiner2.isBlank()) list.add(oneLiner2);
+        if (oneLiner3 != null && !oneLiner3.isBlank()) list.add(oneLiner3);
+
+        if (list.isEmpty()) return null;
+
+        return list.get(new Random().nextInt(list.size()));
     }
 
     public void setDet(int det) { this.det = det; }

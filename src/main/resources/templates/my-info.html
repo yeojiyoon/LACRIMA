@@ -72,6 +72,32 @@
                 </div>
             </div>
 
+            <div class="char-stats" th:if="${myCharacter != null}">
+
+                <div class="stat-row">
+                    <span class="stat-chip atk">ATK</span>
+                    <span class="stat-value" th:text="${myCharacter.atk}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-chip int">INT</span>
+                    <span class="stat-value" th:text="${myCharacter.intelligence}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-chip det">DET</span>
+                    <span class="stat-value" th:text="${myCharacter.det}">0</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-chip hp">HP</span>
+                    <span class="stat-value" th:text="${myCharacter.hp}">0</span>
+                </div>
+
+            </div>
+
+
+
         </div>
 
         <!-- ✅ 좌측 아래: 세로 배지 스택 (VN 박스 침범 X) -->
@@ -85,12 +111,13 @@
             </button>
 
             <!-- SETTING: 링크(없으면 라우트 만들거나 버튼으로 변경) -->
-            <a class="badge-btn badge-setting" href="/settings" aria-label="Setting">
-                <span class="badge-icon" aria-hidden="true">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Ic_settings_48px.svg/1024px-Ic_settings_48px.svg.png" alt="">
-                </span>
+            <button type="button" class="badge-btn badge-setting" id="setting-badge-btn" aria-label="Setting">
+    <span class="badge-icon" aria-hidden="true">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Ic_settings_48px.svg/1024px-Ic_settings_48px.svg.png" alt="">
+    </span>
                 <span class="badge-label">SETTING</span>
-            </a>
+            </button>
+
         </div>
 
         <!-- VN 말풍선 -->
@@ -99,15 +126,59 @@
                  th:text="${myCharacter != null ? myCharacter.name : '???'}">
                 소드 앨리스
             </div>
-            <div class="vn-dialog-text">
-                <span th:if="${myCharacter != null && myCharacter.oneLiner1 != null}"
-                      th:text="${myCharacter.oneLiner1}">
-                </span>
-                <span th:if="${myCharacter == null || myCharacter.oneLiner1 == null}">
-                    ……괜찮아. 네가 있는 한, 난 무너지지 않아.
-                </span>
+            <div class="vn-dialog-text" id="vn-dialog-text">
+                <span th:if="${myCharacter != null && myCharacter.randomOneLiner != null}"
+                      th:text="${myCharacter.randomOneLiner}">
+</span>
+
+                <span th:if="${myCharacter == null || myCharacter.randomOneLiner == null}">
+    ……괜찮아. 네가 있는 한, 난 무너지지 않아.
+</span>
             </div>
         </div>
+
+        <!-- ✅ SETTING 모달(드래그 가능) -->
+        <div class="settings-backdrop" id="settings-backdrop" hidden></div>
+
+        <section class="settings-window" id="settings-window" hidden
+                 th:attr="data-one1=${myCharacter != null ? myCharacter.oneLiner1 : ''},
+                  data-one2=${myCharacter != null ? myCharacter.oneLiner2 : ''},
+                  data-one3=${myCharacter != null ? myCharacter.oneLiner3 : ''}">
+            <header class="settings-header" id="settings-drag-handle">
+                <div class="settings-title">
+                    <div class="settings-label">SETTING</div>
+                    <div class="settings-h1">한마디 설정</div>
+                </div>
+
+                <button type="button" class="settings-close" id="settings-close-btn" aria-label="Close">✕</button>
+            </header>
+
+            <div class="settings-body">
+                <div class="settings-section-title">한마디</div>
+
+                <label class="settings-field">
+                    <span>한마디 1</span>
+                    <input id="one1" type="text" maxlength="255" placeholder="예) ……괜찮아. 네가 있는 한, 난 무너지지 않아.">
+                </label>
+
+                <label class="settings-field">
+                    <span>한마디 2</span>
+                    <input id="one2" type="text" maxlength="255" placeholder="예) 네가 선택한 길이라면, 나도 함께 갈게.">
+                </label>
+
+                <label class="settings-field">
+                    <span>한마디 3</span>
+                    <input id="one3" type="text" maxlength="255" placeholder="예) 오늘도, 무사히 돌아오자.">
+                </label>
+
+                <div class="settings-actions">
+                    <button type="button" class="settings-btn primary" id="settings-save-btn">저장</button>
+                </div>
+
+                <div class="settings-hint" id="settings-hint" aria-live="polite"></div>
+            </div>
+        </section>
+
 
     </section>
 

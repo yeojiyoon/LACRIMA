@@ -139,21 +139,24 @@
                         <div class="char-body-row">
                             <!-- 스탯 4개 -->
                             <div class="char-stats">
-                                <div class="char-stat-row">
-                                    <span class="label">ATK</span>
-                                    <span class="value"
-                                          th:text="${member.atkStat}">-</span>
-                                    <span class="label">INT</span>
-                                    <span class="value"
-                                          th:text="${member.intStat}">-</span>
+                                <div class="stat-row">
+                                    <span class="stat-chip atk">ATK</span>
+                                    <span class="stat-value">120</span>
                                 </div>
-                                <div class="char-stat-row">
-                                    <span class="label">DET</span>
-                                    <span class="value"
-                                          th:text="${member.detStat}">-</span>
-                                    <span class="label">HP</span>
-                                    <span class="value"
-                                          th:text="${member.hpStat}">-</span>
+
+                                <div class="stat-row">
+                                    <span class="stat-chip int">INT</span>
+                                    <span class="stat-value">85</span>
+                                </div>
+
+                                <div class="stat-row">
+                                    <span class="stat-chip det">DET</span>
+                                    <span class="stat-value">70</span>
+                                </div>
+
+                                <div class="stat-row">
+                                    <span class="stat-chip hp">HP</span>
+                                    <span class="stat-value">5</span>
                                 </div>
                             </div>
 

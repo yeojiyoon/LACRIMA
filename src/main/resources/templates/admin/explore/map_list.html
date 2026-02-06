@@ -1,0 +1,53 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" th:href="@{/admin/admin.css}">
+    <title>Explore Maps</title>
+</head>
+<body class="admin">
+<div class="shell">
+    <aside class="side">
+        <div class="brand">Lacrima Admin</div>
+        <a class="nav" th:href="@{/admin/explore/maps}">탐색 맵</a>
+        <a class="nav" th:href="@{/admin/explore/events}">탐색 이벤트</a>
+    </aside>
+
+    <main class="main">
+        <header class="top">탐색 맵</header>
+
+        <section class="grid2">
+            <div class="panel">
+                <h2>맵 목록</h2>
+                <table class="table">
+                    <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Size</th></tr></thead>
+                    <tbody>
+                    <tr th:each="m : ${maps}">
+                        <td th:text="${m.id}"></td>
+                        <td><a th:href="@{|/admin/explore/maps/${m.id}|}" th:text="${m.code}"></a></td>
+                        <td th:text="${m.name}"></td>
+                        <td th:text="${m.width} + 'x' + ${m.height}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h2>맵 추가</h2>
+                <form method="post" th:action="@{/admin/explore/maps}" class="form">
+                    <label>Code</label><input name="code" placeholder="field01" required>
+                    <label>Name</label><input name="name" placeholder="초원 지대" required>
+                    <div class="row2">
+                        <div><label>Width</label><input name="width" type="number" value="25"></div>
+                        <div><label>Height</label><input name="height" type="number" value="25"></div>
+                    </div>
+                    <label>Explanation</label><textarea name="explanation" rows="3"></textarea>
+                    <button class="btn primary" type="submit">생성 + 타일 자동 생성</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

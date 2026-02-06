@@ -1,0 +1,27 @@
+body { font-family: system-ui, sans-serif; padding: 16px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.status { margin: 12px 0; font-weight: 600; }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 44px);
+    gap: 6px;
+}
+
+.cell {
+    width: 44px;
+    height: 44px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+}
+.cell:hover { border-color: #666; }
+
+.cell.me { outline: 3px solid #000; font-weight: 800; }
+.cell.discovered { background: #f3f3f3; }
+.cell.adj { border-color: #333; }
+.cell.disabled { opacity: 0.35; cursor: not-allowed; }
+
+.toast { margin-top: 10px; color: #b00; white-space: pre-wrap; }

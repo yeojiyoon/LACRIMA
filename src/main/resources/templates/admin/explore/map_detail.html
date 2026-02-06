@@ -1,0 +1,89 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" th:href="@{/admin/admin.css}">
+  <script th:src="@{/admin/explore_map.js}" defer></script>
+  <title th:text="'Map: ' + ${map.name}">Map</title>
+</head>
+<body class="admin">
+<div class="shell">
+  <aside class="side">
+    <div class="brand">Lacrima Admin</div>
+    <a class="nav" th:href="@{/admin/explore/maps}">탐색 맵</a>
+    <a class="nav" th:href="@{/admin/explore/events}">탐색 이벤트</a>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div>
+        <div class="title" th:text="${map.name}"></div>
+        <div class="muted" th:text="${map.code} + ' · ' + ${map.width} + 'x' + ${map.height}"></div>
+      </div>
+    </header>
+
+    <section class="detail">
+      <div class="panel">
+        <h2>타일 편집</h2>
+        <div id="grid"
+             class="map"
+             th:attr="data-map-id=${map.id},data-w=${map.width},data-h=${map.height}">
+        </div>
+        <div class="muted">칸을 클릭하면 우측에서 벽/이벤트를 설정합니다.</div>
+      </div>
+
+      <div class="panel">
+        <h2>선택 타일</h2>
+        <div class="kv">
+          <div><span>좌표</span> <b id="xy">-</b></div>
+          <div><span>벽</span> <b id="blockedText">-</b></div>
+          <div><span>이벤트</span> <b id="eventText">-</b></div>
+        </div>
+
+        <label class="chk">
+          <input type="checkbox" id="blocked"> 벽(이동 불가)
+        </label>
+
+        <label>이벤트 선택</label>
+        <select id="eventSelect">
+          <option value="">(없음)</option>
+          <option th:each="e : ${events}"
+                  th:value="${e.id}"
+                  th:text="${e.code + ' | ' + e.name + ' (type=' + e.eventType + ')'}"></option>
+        </select>
+
+        <div class="row2">
+          <div>
+            <label>eventType</label>
+            <select id="eventType">
+              <option value="">(자동)</option>
+              <option value="1">SCENE(1)</option>
+              <option value="2">TREASURE(2)</option>
+              <option value="3">MONSTER(3)</option>
+            </select>
+          </div>
+          <div class="muted small">* eventId 선택 시 type도 맞춰주세요(초기버전)</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="saveBtn">저장</button>
+          <button class="btn" id="clearBtn">이벤트 제거</button>
+        </div>
+
+        <div id="toast" class="toast" style="display:none;"></div>
+
+        <hr/>
+
+        <h3>이벤트 프리뷰</h3>
+        <div id="preview" class="preview muted">이벤트가 있는 타일을 선택하면 표시됩니다.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  window.__MAP_ID__ = /*[[${map.id}]]*/ 0;
+</script>
+</body>
+</html>

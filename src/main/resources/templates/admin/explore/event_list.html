@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" th:href="@{/admin/admin.css}">
+    <title>Explore Events</title>
+</head>
+<body class="admin">
+<div class="shell">
+    <aside class="side">
+        <div class="brand">Lacrima Admin</div>
+        <a class="nav" th:href="@{/admin/explore/maps}">탐색 맵</a>
+        <a class="nav" th:href="@{/admin/explore/events}">탐색 이벤트</a>
+    </aside>
+
+    <main class="main">
+        <header class="top">
+            <div class="title">탐색 이벤트</div>
+            <a class="btn primary" th:href="@{/admin/explore/events/new}">+ 새 이벤트</a>
+        </header>
+
+        <section class="panel">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Type</th><th>Active</th></tr></thead>
+                <tbody>
+                <tr th:each="e : ${events}">
+                    <td th:text="${e.id}"></td>
+                    <td><a th:href="@{|/admin/explore/events/${e.id}|}" th:text="${e.code}"></a></td>
+                    <td th:text="${e.name}"></td>
+                    <td th:text="${e.eventType}"></td>
+                    <td th:text="${e.active}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+</body>
+</html>

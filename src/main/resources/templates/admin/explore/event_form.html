@@ -1,0 +1,64 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" th:href="@{/admin/admin.css}">
+    <title>Event Form</title>
+</head>
+<body class="admin">
+<div class="shell">
+    <aside class="side">
+        <div class="brand">Lacrima Admin</div>
+        <a class="nav" th:href="@{/admin/explore/maps}">탐색 맵</a>
+        <a class="nav" th:href="@{/admin/explore/events}">탐색 이벤트</a>
+    </aside>
+
+    <main class="main">
+        <header class="top">
+            <div class="title" th:text="${isNew} ? '이벤트 생성' : '이벤트 수정'"></div>
+        </header>
+
+        <section class="panel">
+            <form th:if="${isNew}" method="post" th:action="@{/admin/explore/events}" class="form">
+                <label>Code</label><input name="code" th:value="${event.code}" required>
+                <label>Name</label><input name="name" th:value="${event.name}" required>
+                <label>EventType (1/2/3)</label><input name="eventType" type="number" th:value="${event.eventType}" required>
+                <label class="chk"><input type="checkbox" name="repeatable"> repeatable</label>
+                <button class="btn primary" type="submit">생성</button>
+            </form>
+
+            <form th:unless="${isNew}" method="post"
+                  th:action="@{|/admin/explore/events/${event.id}|}" class="form">
+
+                <div class="muted">code: <b th:text="${event.code}"></b> / id: <b th:text="${event.id}"></b></div>
+
+                <label>Name</label><input name="name" th:value="${event.name}" required>
+                <label>EventType (1/2/3)</label><input name="eventType" type="number" th:value="${event.eventType}" required>
+
+                <label class="chk">
+                    <input type="checkbox" name="repeatable" th:checked="${event.repeatable}"> repeatable
+                </label>
+                <label class="chk">
+                    <input type="checkbox" name="active" th:checked="${event.active}"> active
+                </label>
+
+                <hr/>
+                <h3>VN Assets</h3>
+                <label>Background URL</label><input name="backgroundUrl" th:value="${event.backgroundUrl}">
+                <label>NPC Name</label><input name="npcName" th:value="${event.npcName}">
+                <label>NPC Portrait URL</label><input name="npcPortraitUrl" th:value="${event.npcPortraitUrl}">
+
+                <label>Script JSON</label>
+                <textarea name="scriptJson" rows="8" th:text="${event.scriptJson}"></textarea>
+
+                <label>Reward JSON</label>
+                <textarea name="rewardJson" rows="6" th:text="${event.rewardJson}"></textarea>
+
+                <button class="btn primary" type="submit">저장</button>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Explore Demo</title>
+    <link rel="stylesheet" href="/explore/dungeon.css">
+</head>
+<body>
+<h2>탐색 데모</h2>
+
+<div class="row">
+    <label>mapId
+        <input id="mapId" type="number" value="1" min="1" />
+    </label>
+
+    <label>characterId
+        <input id="characterId" type="number" value="1" min="1" />
+    </label>
+
+    <button id="btnReload">새로고침</button>
+</div>
+
+<div id="status" class="status"></div>
+<div id="grid" class="grid"></div>
+<div id="toast" class="toast"></div>
+
+<script src="/explore/dungeon.js"></script>
+</body>
+</html>
